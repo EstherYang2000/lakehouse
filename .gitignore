@@ -1,3 +1,5 @@
 .env
 
 deltalake/
+venv/
+data/
