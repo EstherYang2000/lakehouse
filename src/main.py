@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from lakehouse.src.minio_utils import Minio
+from minio import Minio
 from minio.error import S3Error
 
 def generate_fake_supply_chain_data(num_records):
@@ -60,11 +60,11 @@ def upload_to_minio(client, bucket_name, file_name, buffer):
 
 def main():
     # MinIO 配置
-    minio_endpoint = os.getenv("MINIO_ENDPOINT")
-    access_key = os.getenv("MINIO_ACCESS_KEY")
-    secret_key = os.getenv("MINIO_SECRET_KEY")
-    bucket_name = os.getenv("MINIO_BUCKET_NAME")
-    parquet_file_name = os.getenv("PARQUET_FILE_NAME")
+    minio_endpoint = "localhost:9000"
+    access_key = "esther"
+    secret_key = "estheresther"
+    bucket_name = "scpm"
+    parquet_file_name = "supply_chain_data.parquet"
     # 創建 MinIO 客戶端
     minio_client = create_minio_client(minio_endpoint, access_key, secret_key)
     # 確保存儲桶存在
