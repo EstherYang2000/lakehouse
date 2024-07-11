@@ -19,5 +19,10 @@
   - <https://stackoverflow.com/questions/78707635/connecting-to-delta-lake-hosted-on-minio-from-dask>
   - <https://s3fs.readthedocs.io/en/latest/#s3-compatible-storage>
 
-
+- hudi 
+  - <https://hudi.apache.org/docs/docker_demo/>
+  - <https://github.com/apache/hudi>
+- iceberg
+  - <https://github.com/tabular-io/docker-spark-iceberg/blob/main/docker-compose.yml>
+  - 
 

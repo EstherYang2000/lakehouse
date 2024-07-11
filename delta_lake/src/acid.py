@@ -22,6 +22,11 @@ delta_config ={
     "AWS_S3_ALLOW_UNSAFE_RENAME": "true",
     "AWS_ALLOW_HTTP": "true",
     "AWS_EC2_METADATA_DISABLED": "true",
+    "logStore": "s3",
+    "logStore.S3.endpoint": minio_endpoint,
+    "logStore.S3.accessKey": minio_access_key,
+    "logStore.S3.secretKey": minio_secret_key,
+    "logStore.S3.path": delta_log_path,
 
 }
 # os.environ['S3_ACCESS_KEY'] = minio_access_key
