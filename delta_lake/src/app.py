@@ -17,3 +17,4 @@ dt = DeltaTable("/tmp/deltars_table")
 
 # Show the Delta Lake table
 print(dt.to_pandas())
+

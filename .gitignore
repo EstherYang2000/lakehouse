@@ -3,3 +3,4 @@
 deltalake/
 venv/
 data/
+__pycache__/

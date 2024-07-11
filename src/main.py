@@ -60,7 +60,7 @@ def upload_to_minio(client, bucket_name, file_name, buffer):
 
 def main():
     # MinIO 配置
-    minio_endpoint = "localhost:9000"
+    minio_endpoint = "http://localhost:9000"
     access_key = "esther"
     secret_key = "estheresther"
     bucket_name = "scpm"
