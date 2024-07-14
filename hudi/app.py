@@ -8,7 +8,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # MinIO configurations
-minio_endpoint = "http://localhost:9000"
+minio_endpoint = "http://minio_hudi:9000"
 minio_access_key = "esther"
 minio_secret_key = "estheresther"
 minio_bucket = "scpm"
@@ -24,7 +24,8 @@ data = [
     ("2", "Bob", 45, "2023-01-01"),
 ]
 columns = ["uuid", "name", "age", "ts"]
-df = spark.createDataFrame(data, columns)
+
+df = spark.createDataFrame(data, ['id', 'ts', 'partitionpath'])
 
 # Hudi table path (s3a:// protocol for MinIO)
 hudi_table_path = f"localhost:9000//{minio_bucket}/hudi_table"  
@@ -42,6 +43,7 @@ hudi_options = {
 }
 
 # Write DataFrame to Hudi table
+
 df.write.format("hudi").options(**hudi_options).mode("append").save(hudi_table_path)
 
 # Stop SparkSession
