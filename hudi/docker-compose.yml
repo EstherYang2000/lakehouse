@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.7"
 
 services:
   minio_hudi:
@@ -16,8 +16,8 @@ services:
     volumes:
       - minio-data:/data
   namenode:
-    image: apachehudi/hudi-hadoop_2.8.4-namenode:linux-arm64-0.10.1
-    platform: linux/arm64
+    image: apachehudi/hudi-hadoop_3.1.0-namenode:latest
+    
     hostname: namenode
     container_name: namenode
     environment:
@@ -38,8 +38,7 @@ services:
       - namenode_data:/hadoop/dfs/name
 
   datanode1:
-    image: apachehudi/hudi-hadoop_2.8.4-datanode:linux-arm64-0.10.1
-    platform: linux/arm64
+    image: apachehudi/hudi-hadoop_3.1.0-datanode:latest
     container_name: datanode1
     hostname: datanode1
     environment:
@@ -63,8 +62,7 @@ services:
     volumes:
       - datanode1_data:/hadoop/dfs/data
   trino-coordinator-1:
-    image: apachehudi/hudi-hadoop_2.8.4-trinocoordinator_368:linux-arm64-0.12.0
-    platform: linux/arm64
+    image: apachehudi/hudi-hadoop_2.8.4-trinocoordinator_368:latest
     hostname: trino-coordinator-1
     container_name: trino-coordinator-1
     environment:
@@ -77,9 +75,9 @@ services:
       - ./tmp/trino-exchange-manager:/tmp/trino-exchange-manager
     ports:
       - "8091:8080"  # 使用8081替代8080
-    cpus: 2
-    mem_limit: 4g
-    memswap_limit: 20g
+    # cpus: 2
+    # mem_limit: 4g
+    # memswap_limit: 20g
     networks:
       - hudinw
     links:
