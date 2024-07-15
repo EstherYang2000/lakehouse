@@ -16,7 +16,7 @@ services:
     volumes:
       - minio-data:/data
   namenode:
-    image: apachehudi/hudi-hadoop_3.1.0-namenode:latest
+    image: apachehudi/hudi-hadoop_2.8.4-namenode:linux-arm64-0.10.1
     
     hostname: namenode
     container_name: namenode
