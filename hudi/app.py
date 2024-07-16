@@ -1,50 +1,41 @@
 from pyspark.sql import SparkSession
-
-# Create SparkSession
-spark = SparkSession.builder \
-    .appName("Hudi Example with MinIO") \
-    .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
-    .config("spark.sql.hive.convertMetastoreParquet", "false") \
-    .getOrCreate()
-
-# MinIO configurations
-minio_endpoint = "http://minio_hudi:9000"
+# pyspark 3.4.0
+# Define MinIO endpoint and credentials
+minio_endpoint = "http://localhost:9000"
 minio_access_key = "esther"
 minio_secret_key = "estheresther"
 minio_bucket = "scpm"
 
-# Set MinIO credentials for Spark to access data
-spark._jsc.hadoopConfiguration().set("fs.s3a.endpoint", minio_endpoint)
-spark._jsc.hadoopConfiguration().set("fs.s3a.access.key", minio_access_key)
-spark._jsc.hadoopConfiguration().set("fs.s3a.secret.key", minio_secret_key)
+# Initialize SparkSession
+spark = SparkSession.builder \
+    .appName("Hudi with MinIO") \
+    .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
+    .config("spark.sql.hive.convertMetastoreParquet", "false") \
+    .config("spark.hadoop.fs.s3a.access.key", minio_access_key) \
+    .config("spark.hadoop.fs.s3a.secret.key", minio_secret_key) \
+    .config("spark.hadoop.fs.s3a.endpoint", minio_endpoint) \
+    .config("spark.hadoop.fs.s3a.path.style.access", "true") \
+    .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
+    .config("spark.jars.packages", "org.apache.hudi:hudi-spark3.4-bundle_2.12:0.14.0,org.apache.hadoop:hadoop-aws:3.3.4") \
+    .config("spark.jars.excludes", "org.apache.hadoop:hadoop-common,org.apache.hadoop:hadoop-mapreduce-client-core") \
+    .config("spark.hadoop.fs.s3a.aws.credentials.provider", "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider") \
+    .getOrCreate()
 
-# Example DataFrame
-data = [
-    ("1", "Alice", 34, "2023-01-01"),
-    ("2", "Bob", 45, "2023-01-01"),
-]
-columns = ["uuid", "name", "age", "ts"]
 
-df = spark.createDataFrame(data, ['id', 'ts', 'partitionpath'])
+# Path to the Parquet file in MinIO
+table_name = "test_cow_table_minio"
+partition_name = "san_francisco"
+file_name = "4ab80b17-0b8d-4954-bd70-f35d03eee130-0_0-22-70_20240716153900160.parquet"
+parquet_file_path = f"s3a://{minio_bucket}/{table_name}/{partition_name}/{file_name}"
 
-# Hudi table path (s3a:// protocol for MinIO)
-hudi_table_path = f"localhost:9000//{minio_bucket}/hudi_table"  
+# Read Parquet file into a DataFrame
+df = spark.read.parquet(parquet_file_path)
 
-# Hudi options for table creation and data ingestion
-hudi_options = {
-    "hoodie.table.name": "hudi_table",
-    "hoodie.datasource.write.recordkey.field": "uuid",
-    "hoodie.datasource.write.partitionpath.field": "ts",
-    "hoodie.datasource.write.table.name": "hudi_table",
-    "hoodie.datasource.write.operation": "upsert",
-    "hoodie.datasource.write.precombine.field": "ts",
-    "hoodie.upsert.shuffle.parallelism": 2,
-    "hoodie.insert.shuffle.parallelism": 2,
-}
+# Show the DataFrame schema
+df.printSchema()
 
-# Write DataFrame to Hudi table
-
-df.write.format("hudi").options(**hudi_options).mode("append").save(hudi_table_path)
+# Show sample data from the DataFrame
+df.show()
 
 # Stop SparkSession
 spark.stop()
