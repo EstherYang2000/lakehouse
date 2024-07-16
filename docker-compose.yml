@@ -1,9 +1,9 @@
-version: "3.7"
+version: '3.8'
 
 services:
-  minio_hudi:
+  minio:
     image: minio/minio:latest
-    container_name: minio_hudi
+    container_name: minio
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -11,98 +11,62 @@ services:
       MINIO_ROOT_USER: esther
       MINIO_ROOT_PASSWORD: estheresther
     networks:
-      - hudinw
+      - lakehouse-nw
     command: server /data --console-address ":9001"
     volumes:
       - minio-data:/data
-  namenode:
-    image: apachehudi/hudi-hadoop_3.1.0-namenode:latest
-    
-    hostname: namenode
-    container_name: namenode
-    environment:
-      - CLUSTER_NAME=hudi_hadoop284
-    ports:
-      - "50070:50070"
-      - "8020:8020"
+  spark-iceberg:
+      image: tabulario/spark-iceberg:latest
+      container_name: spark-iceberg
+      build: spark/
+      networks:
+        - lakehouse-nw
+      depends_on:
+        - rest
+        - minio
+      volumes:
+        - ./iceberg:/home/iceberg/warehouse
+        - ./iceberg/src:/home/iceberg/notebooks/notebooks
+      environment:
+        - AWS_ACCESS_KEY_ID=esther
+        - AWS_SECRET_ACCESS_KEY=estheresther
+        - AWS_REGION=local
+        - AWS_DEFAULT_REGION=local
+      ports:
+        - 8888:8888
+        - 8080:8080
+        - 10000:10000
+        - 10001:10001
+  rest:
+    image: tabulario/iceberg-rest:latest
+    container_name: iceberg-rest
     networks:
-      - hudinw
-    env_file:
-      - ./hadoop.env
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://namenode:50070"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    volumes:
-      - namenode_data:/hadoop/dfs/name
+      - lakehouse-nw
+    ports:
+      - 8181:8181
+    environment:
+      - AWS_ACCESS_KEY_ID=esther
+      - AWS_SECRET_ACCESS_KEY=estheresther
+      - AWS_REGION=local
+      - AWS_DEFAULT_REGION=local
+      - CATALOG_WAREHOUSE=s3://iceberg/
+      - CATALOG_IO__IMPL=org.apache.iceberg.aws.s3.S3FileIO
+      - CATALOG_S3_ENDPOINT=http://minio:9000
+  # delta-app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: delta-app
+  #   networks:
+  #     - lakehouse-nw
+  #   volumes:
+  #     - ./delta_lake/src:/src
+  #   entrypoint: ["python3","/src/acid.py"]
 
-  datanode1:
-    image: apachehudi/hudi-hadoop_3.1.0-datanode:latest
-    container_name: datanode1
-    hostname: datanode1
-    environment:
-      - CLUSTER_NAME=hudi_hadoop284
-    env_file:
-      - ./hadoop.env
-    ports:
-      - "50075:50075"
-      - "50010:50010"
-    networks:
-      - hudinw
-    links:
-      - "namenode"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://datanode1:50075"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    depends_on:
-      - namenode
-    volumes:
-      - datanode1_data:/hadoop/dfs/data
-  trino-coordinator-1:
-    image: trinodb/trino:latest
-    hostname: trino-coordinator-1
-    container_name: trino-coordinator-1
-    # environment:
-    #   - CLUSTER_NAME=hudi_hadoop284                    
-    volumes:
-      - ./trino/etc:/etc/trino
-      - ./trino/catalog:/etc/trino/catalog
-      - trino_data:/opt/trino/data
-      - ./trino/spill:/var/lib/trino/spill
-      - ./tmp/trino-exchange-manager:/tmp/trino-exchange-manager
-    ports:
-      - "8080:8080"  # 使用8082替代8080
-      # - "5005"
-    # cpus: 2
-    # mem_limit: 4g
-    # memswap_limit: 20g
-    networks:
-      - hudinw
-    links:
-      - "namenode"
-      - "datanode1"
-    depends_on:
-      - minio_hudi
-      - namenode
-      - datanode1
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://trino-coordinator-1:8080"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
 volumes:
   minio-data:
-    driver: local
-  namenode_data:
-    driver: local
-  datanode1_data:
-    driver: local
-  trino_data:
-    driver: local
 
 networks:
-  hudinw:
+  lakehouse-nw:
     driver: bridge
+
