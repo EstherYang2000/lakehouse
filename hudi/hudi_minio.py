@@ -60,17 +60,25 @@ hudi_options = {
     'hoodie.insert.shuffle.parallelism': '10',
     'hoodie.upsert.shuffle.parallelism': '10',
     'hoodie.delete.shuffle.parallelism': '10',
-    'hoodie.datasource.hive_sync.enable': 'false',  # Disable Hive sync
-    'hoodie.datasource.write.hive_style_partitioning': 'false'
+    'hoodie.datasource.hive_sync.enable': 'true',  # Disable Hive sync
+    'hoodie.datasource.hive_sync.database': 'default',
+    'hoodie.datasource.hive_sync.table': table,
+    'hoodie.datasource.write.hive_style_partitioning': 'false',
+    'hoodie.datasource.hive_sync.enable': 'true',
+    'hoodie.datasource.hive_sync.mode': 'hms',
+    'hoodie.datasource.hive_sync.partition_extractor_class': 'org.apache.hudi.hive.MultiPartKeysValueExtractor',
+    'hoodie.datasource.hive_sync.jdbcurl': 'jdbc:hive2://localhost:10000',
+    'hoodie.datasource.hive_sync.metastore.uris': 'thrift://localhost:9083'
+    
 }
 
 basePath = f"s3a://{minio_bucket}/{table}"
 
-# # 1. insert data to hudi table
-# inserts.write.format("hudi"). \
-#     options(**hudi_options). \
-#     mode("overwrite"). \
-#     save(basePath)
+# 1. insert data to hudi table
+inserts.write.format("hudi"). \
+    options(**hudi_options). \
+    mode("overwrite"). \
+    save(basePath)
 
 
 # 2. Upsert Data
@@ -95,19 +103,19 @@ basePath = f"s3a://{minio_bucket}/{table}"
 #   save(basePath)
 
 # 4. Delete Data
-delete_data = [
-    (1695159649087, "334e26e9-8355-45cc-97c6-c31daf0df330", "rider-A", "driver-K", 20.1, "san_francisco"),  # Match schema
-    (1695091554788, "e96c4396-3fad-413a-a942-4cb36106d721", "rider-C", "driver-M", 27.70, "san_francisco")   # Match schema
-]
-deletes = spark.createDataFrame(delete_data).toDF(*columns)
+# delete_data = [
+#     (1695159649087, "334e26e9-8355-45cc-97c6-c31daf0df330", "rider-A", "driver-K", 20.1, "san_francisco"),  # Match schema
+#     (1695091554788, "e96c4396-3fad-413a-a942-4cb36106d721", "rider-C", "driver-M", 27.70, "san_francisco")   # Match schema
+# ]
+# deletes = spark.createDataFrame(delete_data).toDF(*columns)
 
-deletes = deletes.withColumn("_hoodie_is_deleted", lit(True))
+# deletes = deletes.withColumn("_hoodie_is_deleted", lit(True))
 
-deletes.write.format("hudi"). \
-    options(**hudi_options). \
-    mode("append"). \
-    option("hoodie.datasource.write.operation", "delete") \
-    .save(basePath)
+# deletes.write.format("hudi"). \
+#     options(**hudi_options). \
+#     mode("append"). \
+#     option("hoodie.datasource.write.operation", "delete") \
+#     .save(basePath)
 
 # Read Hudi table
 hudi_df = spark.read.format("hudi").load(basePath)

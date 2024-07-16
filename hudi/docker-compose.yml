@@ -15,52 +15,91 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio-data:/data
-  namenode:
-    image: apachehudi/hudi-hadoop_3.1.0-namenode:latest
+  # namenode:
+  #   image: apachehudi/hudi-hadoop_2.8.4-namenode:linux-arm64-0.10.1
     
-    hostname: namenode
-    container_name: namenode
-    environment:
-      - CLUSTER_NAME=hudi_hadoop284
-    ports:
-      - "50070:50070"
-      - "8020:8020"
-    networks:
-      - hudinw
-    env_file:
-      - ./hadoop.env
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://namenode:50070"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    volumes:
-      - namenode_data:/hadoop/dfs/name
+  #   hostname: namenode
+  #   container_name: namenode
+  #   environment:
+  #     - CLUSTER_NAME=hudi_hadoop284
+  #   ports:
+  #     - "50070:50070"
+  #     - "8020:8020"
+  #   networks:
+  #     - hudinw
+  #   env_file:
+  #     - ./hadoop.env
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://namenode:50070"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   volumes:
+  #     - namenode_data:/hadoop/dfs/name
 
-  datanode1:
-    image: apachehudi/hudi-hadoop_3.1.0-datanode:latest
-    container_name: datanode1
-    hostname: datanode1
-    environment:
-      - CLUSTER_NAME=hudi_hadoop284
-    env_file:
-      - ./hadoop.env
+  # datanode1:
+  #   image: apachehudi/hudi-hadoop_3.1.0-datanode:latest
+  #   container_name: datanode1
+  #   hostname: datanode1
+  #   environment:
+  #     - CLUSTER_NAME=hudi_hadoop284
+  #   env_file:
+  #     - ./hadoop.env
+  #   ports:
+  #     - "50075:50075"
+  #     - "50010:50010"
+  #   networks:
+  #     - hudinw
+  #   links:
+  #     - "namenode"
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://datanode1:50075"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   depends_on:
+  #     - namenode
+  #   volumes:
+  #     - datanode1_data:/hadoop/dfs/data
+
+  mariadb:
+    image: mariadb:latest
+    hostname: mariadb
+    container_name: mariadb
     ports:
-      - "50075:50075"
-      - "50010:50010"
+      - '3306:3306'
+    volumes:
+      - maria_volume:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+      MYSQL_DATABASE: metastore_db
     networks:
       - hudinw
-    links:
-      - "namenode"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://datanode1:50075"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+  hive-metastore:
+    image: bitsondatadev/hive-metastore:latest
+    hostname: hive-metastore
+    container_name: hive-metastore
+    ports:
+      - '9083:9083' # Metastore Thrift
+      - '10000:10000'
+    # volumes:
+    #   - ./conf/metastore-site.xml:/opt/hive/conf/metastore-site.xml
+    environment:
+      HIVE_METASTORE_DB_TYPE: mariadb
+      HIVE_METASTORE_DB_HOST: mariadb
+      HIVE_METASTORE_DB_PORT: 3306
+      HIVE_METASTORE_DB_NAME: metastore_db
+      HIVE_METASTORE_DB_USERNAME: admin
+      HIVE_METASTORE_DB_PASSWORD: admin
+      HADOOP_HEAPSIZE: 512
+      HIVE_METASTORE_PORT: 9083
     depends_on:
-      - namenode
-    volumes:
-      - datanode1_data:/hadoop/dfs/data
+      - mariadb
+      - minio_hudi
+    networks:
+      - hudinw
   trino-coordinator-1:
     image: trinodb/trino:latest
     hostname: trino-coordinator-1
@@ -81,13 +120,13 @@ services:
     # memswap_limit: 20g
     networks:
       - hudinw
-    links:
-      - "namenode"
-      - "datanode1"
+    # links:
+    #   - "namenode"
+    #   - "datanode1"
     depends_on:
       - minio_hudi
-      - namenode
-      - datanode1
+      # - namenode
+      # - datanode1
     # healthcheck:
     #   test: ["CMD", "curl", "-f", "http://trino-coordinator-1:8080"]
     #   interval: 30s
@@ -96,9 +135,11 @@ services:
 volumes:
   minio-data:
     driver: local
-  namenode_data:
-    driver: local
-  datanode1_data:
+  # namenode_data:
+  #   driver: local
+  # datanode1_data:
+  #   driver: local
+  maria_volume:
     driver: local
   trino_data:
     driver: local
