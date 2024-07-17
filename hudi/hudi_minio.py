@@ -60,15 +60,15 @@ hudi_options = {
     'hoodie.insert.shuffle.parallelism': '10',
     'hoodie.upsert.shuffle.parallelism': '10',
     'hoodie.delete.shuffle.parallelism': '10',
-    'hoodie.datasource.hive_sync.enable': 'true',  # Disable Hive sync
-    'hoodie.datasource.hive_sync.database': 'default',
-    'hoodie.datasource.hive_sync.table': table,
-    'hoodie.datasource.write.hive_style_partitioning': 'false',
-    'hoodie.datasource.hive_sync.enable': 'true',
-    'hoodie.datasource.hive_sync.mode': 'hms',
-    'hoodie.datasource.hive_sync.partition_extractor_class': 'org.apache.hudi.hive.MultiPartKeysValueExtractor',
-    'hoodie.datasource.hive_sync.jdbcurl': 'jdbc:hive2://localhost:10000',
-    'hoodie.datasource.hive_sync.metastore.uris': 'thrift://localhost:9083'
+    'hoodie.datasource.hive_sync.enable': 'false',  # Disable Hive sync
+    # 'hoodie.datasource.hive_sync.database': 'default',
+    # 'hoodie.datasource.hive_sync.table': table,
+    # 'hoodie.datasource.write.hive_style_partitioning': 'false',
+    # 'hoodie.datasource.hive_sync.enable': 'true',
+    # 'hoodie.datasource.hive_sync.mode': 'hms',
+    # 'hoodie.datasource.hive_sync.partition_extractor_class': 'org.apache.hudi.hive.MultiPartKeysValueExtractor',
+    # 'hoodie.datasource.hive_sync.jdbcurl': 'jdbc:hive2://localhost:10000',
+    # 'hoodie.datasource.hive_sync.metastore.uris': 'thrift://localhost:9083'
     
 }
 
