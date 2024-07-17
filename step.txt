@@ -1,5 +1,7 @@
 ssh-keygen -b 4096 -t rsa -C ester6126@gmail.com
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_rsa
+cat ~/.ssh/id_rsa.pub
 git config --global user.name estheryang2000
 git config --global user.email ester6126@gmail.com
+git remote set-url origin git@github.com:EstherYang2000/lakehouse.git
