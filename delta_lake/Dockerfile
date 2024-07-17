@@ -2,10 +2,13 @@
 FROM deltaio/delta-docker:latest
 
 # Switch to root user to install additional packages
-USER root
+# USER root
 # Install Python and necessary packages
-RUN apt-get update && apt-get install -y python3 python3-pip
-RUN pip3 install pandas pyarrow deltalake
+# RUN apt-get update && apt-get install -y python3 python3-pip
+COPY requirements.txt ./requirements.txt
+
+# RUN pip3 install pandas pyarrow deltalake
+RUN pip3 install -r requirements.txt
 
 WORKDIR /src
 # Copy your script into the container

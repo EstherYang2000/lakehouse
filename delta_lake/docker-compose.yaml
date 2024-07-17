@@ -1,0 +1,39 @@
+version: '3.7'
+
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: esther
+      MINIO_ROOT_PASSWORD: estheresther
+    networks:
+      - lakehouse-nw
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+  # delta_service:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   image: delta-acid-app:latest  # Optionally tag the built image
+  #   container_name: delta-lake-app
+  #   volumes:
+  #     - ./src:/src  # Mount your script directory into the container
+    
+  #   networks:
+  #     - lakehouse-nw
+  #   working_dir: /src
+  #   entrypoint: ["python3", "/src/acid.py"]
+  #   ports:
+  #     - "8083:8083"  # Expose port 8080
+volumes:
+  minio-data:
+    driver: local
+
+networks:
+  lakehouse-nw:
+    driver: bridge

@@ -1,8 +1,10 @@
 import pandas as pd
 from deltalake.writer import write_deltalake
-from deltalake import DeltaTable
+from deltalake import DeltaTable,merge
 import json
 import os
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType
+
 # Define MinIO endpoint and credentials
 minio_endpoint = "http://minio:9000"
 minio_access_key = "esther"
@@ -35,18 +37,34 @@ delta_config ={
 # os.environ['S3_REGION'] = "local"
 # os.environ['S3_PATH_STYLE_ACCESS'] = "true"
 
-
+# Define schema for the Delta Lake table
+schema = StructType([
+    StructField("id", IntegerType(), False),
+    StructField("name", StringType(), False)
+])
 
 # Create a Pandas DataFrame
 df = pd.DataFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"]})
 
 # Write DataFrame to Delta Lake table in MinIO
-write_deltalake(delta_table_path, df,storage_options=delta_config)
+write_deltalake(delta_table_path, df,scstorage_options=delta_config)
 
-# Append new data to existing Delta Lake table in MinIO
+# Append new data to existing Delta Lake table in MinIO overwrite
 # df_append = pd.DataFrame({"id": [4, 5], "name": ["David", "Eve"]})
 # write_deltalake(delta_table_path, df_append, mode="overwrite",storage_options=delta_config)
 
-# Read and display the Delta Lake table from MinIO
+
+# Append new data to existing Delta Lake table in MinIO overwrite
+# df_append = pd.DataFrame({"id": [6, 7], "name": ["Esther", "Eva"]})
+# write_deltalake(delta_table_path, df_append, mode="append",storage_options=delta_config)
+
+
+# Define update data
+df_update = pd.DataFrame({"id": [1, 2], "name": ["Updated Alice", "Updated Bob"]})
+# Perform merge operation to update records based on id column
+merge(delta_table_path, df_update, on="id", storage_options=delta_config)
+
+#Read and display the Delta Lake table from MinIO
 dt = DeltaTable(delta_table_path,storage_options=delta_config)
 print(dt.to_pandas())
+
