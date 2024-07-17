@@ -52,6 +52,7 @@ services:
   dremio:
     # platform: linux/amd64
     image: dremio/dremio-oss:latest
+    privileged: true
     ports:
       - 9047:9047
       - 31010:31010
