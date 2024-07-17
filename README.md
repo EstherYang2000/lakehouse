@@ -9,7 +9,7 @@
  * Mount the `deltalake` directory to `/tmp/deltars_table` inside the container.
 */
 - `docker run -v ./deltalake:/tmp/deltars_table delta-lake-app`
-- `docker run --name delta-app --network lakehouse_lakehouse-nw delta-lake-app`
+- `docker run --name delta-app --network deltanw delta-lake-app`
 
 - delta-docker
   - <https://github.com/delta-io/delta-docker>

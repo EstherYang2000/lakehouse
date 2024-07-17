@@ -1,0 +1,64 @@
+###########################################
+# Notebook - Iceberg - Nessie Setup
+###########################################
+
+version: "3"
+
+services:
+  # Spark Notebook Server
+  notebook:
+    image: alexmerced/spark33-notebook
+    container_name: notebook
+    privileged: true
+    networks:
+      - iceberghw
+    volumes:
+      - ./warehouse:/home/docker/warehouse
+      - ./notebooks:/home/docker/notebooks
+      - ./datasets:/home/docker/datasets
+    environment:
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=password
+      - AWS_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
+    ports:
+      - 8888:8888
+      - 8080:8080
+      - 10000:10000
+      - 10001:10001
+  # Nessie Catalog Server Using In-Memory Store
+  nessie:
+    image: projectnessie/nessie:0.67.0
+    container_name: nessie
+    networks:
+      - iceberghw
+    ports:
+      - 19120:19120
+  # Minio Storage Server
+  minio:
+    image: minio/minio:latest
+    container_name: minio_iceberg
+    environment:
+      - MINIO_ROOT_USER=esther
+      - MINIO_ROOT_PASSWORD=estheresther
+      - MINIO_DOMAIN=local
+    networks:
+      - iceberghw
+    ports:
+      - 9001:9001
+      - 9000:9000
+    command: ["server", "/data", "--console-address", ":9001"]
+  # Dremio
+  dremio:
+    # platform: linux/amd64
+    image: dremio/dremio-oss:latest
+    ports:
+      - 9047:9047
+      - 31010:31010
+      - 32010:32010
+    container_name: dremio
+    networks:
+      - iceberghw
+networks:
+  iceberghw:
+    driver: bridge
