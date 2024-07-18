@@ -182,11 +182,10 @@ print(beginTime)
 # # incrementally query data
 incremental_read_options = {
   'hoodie.datasource.query.type': 'incremental',
-  'hoodie.datasource.read.begin.instanttime': beginTime,
+  'hoodie.datasource.read.begin.instanttime': commits[0],
   'hoodie.datasource.read.end.instanttime': commits[1]  # Optional: Set end instant time to first commit
 
 }
-
 tripsIncrementalDF = spark.read.format("hudi"). \
   options(**incremental_read_options). \
   load(basePath)
