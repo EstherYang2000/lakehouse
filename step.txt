@@ -4,4 +4,5 @@ ssh-add ~/.ssh/id_rsa
 cat ~/.ssh/id_rsa.pub
 git config --global user.name estheryang2000
 git config --global user.email ester6126@gmail.com
+git clone https://github.com/EstherYang2000/lakehouse.git
 git remote set-url origin git@github.com:EstherYang2000/lakehouse.git
