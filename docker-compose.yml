@@ -15,28 +15,73 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio-data:/data
-  spark-iceberg:
-      image: tabulario/spark-iceberg:latest
-      container_name: spark-iceberg
-      build: spark/
-      networks:
-        - lakehouse-nw
-      depends_on:
-        - rest
-        - minio
-      volumes:
-        - ./iceberg:/home/iceberg/warehouse
-        - ./iceberg/src:/home/iceberg/notebooks/notebooks
-      environment:
-        - AWS_ACCESS_KEY_ID=esther
-        - AWS_SECRET_ACCESS_KEY=estheresther
-        - AWS_REGION=local
-        - AWS_DEFAULT_REGION=local
-      ports:
-        - 8888:8888
-        - 8080:8080
-        - 10000:10000
-        - 10001:10001
+  # mariadb:
+  #   image: mariadb:latest
+  #   container_name: mariadb
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: rootpassword
+  #     MYSQL_DATABASE: metastore
+  #     MYSQL_USER: hive
+  #     MYSQL_PASSWORD: hivepassword
+  #   networks:
+  #     - lakehouse-nw
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mariadb-data:/var/lib/mysql
+  # hive-metastore:
+  #   build: . 
+  #   # image: bitsondatadev/hive-metastore:latest
+  #   privileged: true
+  #   container_name: hive-metastore
+  #   environment:
+  #     METASTORE_DB_TYPE: mariadb
+  #     METASTORE_DB_HOSTNAME: mariadb
+  #     METASTORE_DB_PORT: 3306
+  #     METASTORE_DB_NAME: metastore
+  #     METASTORE_DB_USER: hive
+  #     METASTORE_DB_PASS: hivepassword
+  #   networks:
+  #     - lakehouse-nw
+  #   ports:
+  #     - "9083:9083"
+  #   depends_on:
+  #     - mariadb
+  #   volumes:
+  #     - ./data/conf/hive-site.xml:/opt/hive/conf/hive-site.xml  # Make sure this volume mounts your configuration files
+  #   # command: >
+  #   #   bash -c "
+  #   #   schematool -dbType mysql -initSchema && 
+  #   #   hadoop fs -mkdir -p /user/hive/warehouse && 
+  #   #   hadoop fs -chmod g+w /user/hive/warehouse && 
+  #   #   hiveserver2"
+  #   command: > 
+  #     hive --service metastore
+
+
+
+  # spark-iceberg:
+  #     image: tabulario/spark-iceberg:latest
+  #     container_name: spark-iceberg
+  #     build: spark/
+  #     networks:
+  #       - lakehouse-nw
+  #     depends_on:
+  #       - rest
+  #       - minio
+  #     volumes:
+  #       - ./iceberg:/home/iceberg/warehouse
+  #       - ./iceberg/src:/home/iceberg/notebooks/notebooks
+  #     environment:
+  #       - AWS_ACCESS_KEY_ID=esther
+  #       - AWS_SECRET_ACCESS_KEY=estheresther
+  #       - AWS_REGION=local
+  #       - AWS_DEFAULT_REGION=local
+  #     ports:
+  #       - 8888:8888
+  #       - 8080:8080
+  #       - 10000:10000
+  #       - 10001:10001
   rest:
     image: tabulario/iceberg-rest:latest
     container_name: iceberg-rest
@@ -48,24 +93,15 @@ services:
       - AWS_ACCESS_KEY_ID=esther
       - AWS_SECRET_ACCESS_KEY=estheresther
       - AWS_REGION=local
-      - AWS_DEFAULT_REGION=local
       - CATALOG_WAREHOUSE=s3://iceberg/
       - CATALOG_IO__IMPL=org.apache.iceberg.aws.s3.S3FileIO
       - CATALOG_S3_ENDPOINT=http://minio:9000
-  # delta-app:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: delta-app
-  #   networks:
-  #     - lakehouse-nw
-  #   volumes:
-  #     - ./delta_lake/src:/src
-  #   entrypoint: ["python3","/src/acid.py"]
 
 volumes:
+  mariadb-data:
+    driver: local
   minio-data:
-
+    driver: local
 networks:
   lakehouse-nw:
     driver: bridge

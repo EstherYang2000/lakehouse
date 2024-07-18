@@ -1,45 +1,36 @@
-from pyiceberg.catalog import load_catalog
-from pyiceberg.schema import Schema
-from pyiceberg.types import NestedField, LongType, StringType
+import pyarrow.parquet as pq
+from pyiceberg.catalog.sql import SqlCatalog
+import sqlite3
+import pyarrow.compute as pc
 
-# Define MinIO catalog
-catalog = load_catalog(
-    "minio_catalog",
-    type="s3",
-    warehouse="s3a://scpm",
-    properties={
-        "fs.s3a.endpoint": "http://localhost:9000",
-        "fs.s3a.access.key": "esther",
-        "fs.s3a.secret.key": "estheresther",
+warehouse_path = "data"
+conn = sqlite3.connect(f'{warehouse_path}/pyiceberg_catalog.db')
+
+catalog = SqlCatalog(
+    "default",
+    **{
+        "uri": f"sqlite:///{warehouse_path}/pyiceberg_catalog.db",
+        "warehouse": f"file://{warehouse_path}",
     },
 )
 
-# Create a table schema
-schema = Schema(
-    NestedField.required(1, "id", LongType.get()),
-    NestedField.required(2, "name", StringType.get())
+#create table
+df = pq.read_table("data/houseprice.parquet")
+catalog.create_namespace("default")
+table = catalog.create_table(
+    "default.taxi_dataset",
+    schema=df.schema,
 )
+table.append(df)
+print(len(table.scan().to_arrow()))
 
-# Create a new Iceberg table
-catalog.create_table("minio_catalog.db.my_table", schema)
+df = df.append_column("per_price_area", pc.divide(df["price"], df["area"]))
 
-# Insert data into the table
-from pyiceberg.table import Table
+print(df.schema)
 
-table: Table = catalog.load_table("minio_catalog.db.my_table")
-
-with table.new_append() as append:
-    append.append_file({
-        "id": 1,
-        "name": "Alice"
-    })
-    append.append_file({
-        "id": 2,
-        "name": "Bob"
-    })
-    append.commit()
-
-# Query the table
-rows = table.scan().select(["id", "name"]).collect()
-for row in rows:
-    print(row)
+with table.update_schema() as update_schema:
+    update_schema.union_by_name(df.schema)
+table.overwrite(df)
+print(table.scan().to_arrow())
+df = table.scan(row_filter="per_price_area > 10000").to_arrow()
+len(df)
