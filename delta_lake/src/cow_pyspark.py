@@ -12,7 +12,7 @@ MINIO_SECRET_KEY = "estheresther"
 # MinIO endpoint and Delta Lake table path
 MINIO_ENDPOINT = "http://localhost:9000"
 bucket = "deltalake"
-table = "cow_table"
+table = "cow_table_test"
 # DELTA_TABLE_PATH = f"s3a://{bucket}/{table}"
 DELTA_TABLE_PATH = f"data/{table}"
 #  Create a spark session with Delta
@@ -23,6 +23,7 @@ builder = pyspark.sql.SparkSession.builder.appName("DeltaTutorial") \
 # Create spark context
 spark = configure_spark_with_delta_pip(builder).getOrCreate()
 spark.sparkContext.setLogLevel("ERROR")
+
 # Create spark context
 # spark = configure_spark_with_delta_pip(builder).getOrCreate()
 # spark.sparkContext.setLogLevel("ERROR")
@@ -33,65 +34,82 @@ spark.sparkContext.setLogLevel("ERROR")
 #     .config("spark.hadoop.fs.s3a.path.style.access", "true") \
 #     .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.1,io.delta:delta-core_2.12:2.1.0") \
 # Create a spark dataframe and write as a delta table
-print("Starting Delta table creation")
+# print("Starting Delta table creation")
 
 # Create a spark dataframe and write as a delta table
-# data = [(1, "Baratheon"),
-#         (2, "Stark"),
-#         (3, "Lannister")
-#         ]
-# schema = StructType([
-#     StructField("id", IntegerType(), True),
-#     StructField("name", StringType(), True),
-# ])
-# sample_dataframe = spark.createDataFrame(data=data, schema=schema)
-# sample_dataframe.repartition(1).write.mode(saveMode="append").format("delta").save(DELTA_TABLE_PATH)
+data = [(1, "Baratheon"),
+        (2, "Stark"),
+        (3, "Lannister")
+        ]
+schema = StructType([
+    StructField("id", IntegerType(), True),
+    StructField("name", StringType(), True),
+])
+sample_dataframe = spark.createDataFrame(data=data, schema=schema)
+sample_dataframe.repartition(1).write.mode(saveMode="append").format("delta").save(DELTA_TABLE_PATH)
 
 
 # Update data in Delta
 # print("Update data...!")
 # # delta table path
-# deltaTable = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
-# deltaTable.toDF().show()
-# deltaTable.update(
-#     condition=expr("id == 1"),
-#     set={"name": lit("Esther")})
-# deltaTable.toDF().show()
+# for i in range(0,20):
+#     print(i)
+#     deltaTable = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
+#     deltaTable.toDF().show()
+#     deltaTable.update(
+#         condition=expr("id == 1"),
+#         set={"name": lit(f"{i}")})
+#     deltaTable.toDF().show()
 
 
 # Upsert Data
-# print("Upserting Data...!")
-# # delta table path
-# deltaTable = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
-# deltaTable.toDF().show()
-# # define new data
-# data = [(2, "Andy"),
-#         (4,"Jon"),
-#         (5, "Ken")
-#         ]
+print("Upserting Data...!")
+# delta table path
+deltaTable = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
+deltaTable.toDF().show()
+define new data
+data = [
+        (2, "Andy"),
+        (4,"Jon"),
+        ]
+schema = StructType([
+    StructField("id", IntegerType(), True),
+    StructField("name", StringType(), True)
+])
+newData = spark.createDataFrame(data=data, schema=schema)
+columns = ["id","name"]
 # schema = StructType([
-#     StructField("id", IntegerType(), True),
-#     StructField("name", StringType(), True)
+#     StructField("event_time", TimestampType(), True),
+#     StructField("event_description", StringType(), True)
 # ])
-# newData = spark.createDataFrame(data=data, schema=schema)
 
-# deltaTable.alias("oldData") \
-#     .merge(
-#     newData.alias("newData"),
-#     "oldData.id = newData.id") \
-#     .whenMatchedUpdate(
-#     set={"name": col("newData.name")}) \
-#     .whenNotMatchedInsert(values={"id": col("newData.id"), "name": col("newData.name")}) \
-#     .execute()
-# deltaTable.toDF().show()
+# # Example data with date-time values
+# data = [
+#     ("2023-01-01 12:00:00", "Event 1 description"),
+#     ("2023-01-02 10:30:00", "Event 2 description")
+# ]
+
+# Create DataFrame
+df = spark.createDataFrame(data=data, schema=schema)
+newData.toDF().show()
+
+deltaTable.alias("oldData") \
+    .merge(
+    newData.alias("newData"),
+    "oldData.id = newData.id") \
+    .whenMatchedUpdate(
+    set={"name": col("newData.name")}) \
+    .whenNotMatchedInsert(values={"id": col("newData.id"), "name": col("newData.name")}) \
+    .execute()
+deltaTable.toDF().show()
 
 
 # Delete Data
 # print("Deleting data...!")
-# # delta table path
+# delta table path
 # deltaTable = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
 # deltaTable.toDF().show()
-# deltaTable.delete(condition=expr("name == 'Jon'"))
+# deltaTable.delete(condition=expr("name == '3'"))
 # deltaTable.toDF().show()
 
 # Reading Older version of Data
@@ -115,7 +133,7 @@ print("Starting Delta table creation")
 # Schema Evolution https://delta.io/blog/2023-02-08-delta-lake-schema-evolution/
 
 # df = spark.read.format("delta").load(DELTA_TABLE_PATH)
-# # df.write.option("overwriteSchema", "true")
+# df.write.option("overwriteSchema", "true")
 # # Define new data with an additional column 'age'
 # new_data = [(2, "Andy", 30), (4, "Jon", 25), (5, "Ken", 40)]
 # new_schema = StructType([
@@ -178,41 +196,41 @@ print("Starting Delta table creation")
 
 
 # Define a function to convert string to datetime
-def to_datetime(ts):
-    return datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
+# def to_datetime(ts):
+#     return datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
 
-# # Define a function to get the history of the delta table
-def get_versions_in_time_range(delta_table_path, start_time, end_time):
-    delta_table = DeltaTable.forPath(spark, delta_table_path)
-    history_df = delta_table.history()
-    print(history_df.show())
-    start_time_dt = to_datetime(start_time)
-    end_time_dt = to_datetime(end_time)
-    versions_in_range = history_df.filter(
-        (col("timestamp") >= start_time_dt) & 
-        (col("timestamp") <= end_time_dt)
-    ).select("version").collect()
-    print(versions_in_range)
+# # # Define a function to get the history of the delta table
+# def get_versions_in_time_range(delta_table_path, start_time, end_time):
+#     delta_table = DeltaTable.forPath(spark, delta_table_path)
+#     history_df = delta_table.history()
+#     print(history_df.show())
+#     start_time_dt = to_datetime(start_time)
+#     end_time_dt = to_datetime(end_time)
+#     versions_in_range = history_df.filter(
+#         (col("timestamp") >= start_time_dt) & 
+#         (col("timestamp") <= end_time_dt)
+#     ).select("version").collect()
+#     print(versions_in_range)
     
-    return [row.version for row in versions_in_range]
+#     return [row.version for row in versions_in_range]
 
-# # Define the time range
-start_time = "2024-07-19 00:05:00"
-end_time = "2024-07-19 00:10:10"
+# # # Define the time range
+# start_time = "2024-07-19 00:05:00"
+# end_time = "2024-07-19 00:10:10"
 
-# # Get versions within the time range
-versions = get_versions_in_time_range(DELTA_TABLE_PATH, start_time, end_time)
-# Read data from each version within the time range
-dataframes = []
-for version in versions:
-    df_version = spark.read.format("delta").option("versionAsOf", version).load(DELTA_TABLE_PATH)
-    dataframes.append(df_version)
+# # # Get versions within the time range
+# versions = get_versions_in_time_range(DELTA_TABLE_PATH, start_time, end_time)
+# # Read data from each version within the time range
+# dataframes = []
+# for version in versions:
+#     df_version = spark.read.format("delta").option("versionAsOf", version).load(DELTA_TABLE_PATH)
+#     dataframes.append(df_version)
 
-# Union all dataframes to get the combined result
-if dataframes:
-    combined_df = dataframes[0]
-    for df in dataframes[1:]:
-        combined_df = combined_df.union(df)
-    combined_df.show()
-else:
-    print("No versions found in the specified time range.")
+# # Union all dataframes to get the combined result
+# if dataframes:
+#     combined_df = dataframes[0]
+#     for df in dataframes[1:]:
+#         combined_df = combined_df.union(df)
+#     combined_df.show()
+# else:
+#     print("No versions found in the specified time range.")

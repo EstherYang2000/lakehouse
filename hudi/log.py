@@ -1,4 +1,4 @@
-log_file_path = "./91baf1eb-65d7-422c-8366-679f7cea7271-0_20240717131718847.log.2_0-22-70"
+log_file_path = "./0dd14b4c-5d85-4b28-ac59-e07fe1bf281d-0_20240719111906465.log.1_0-14-67"
 
 try:
     with open(log_file_path, "r", encoding="utf-8", errors="ignore") as log_file:

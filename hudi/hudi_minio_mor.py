@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import lit, col  # 导入 col 函数
-from pyspark.sql.types import StructType, StructField, LongType, StringType, FloatType
-import time 
+from pyspark.sql.types import StructType, StructField, LongType, StringType, FloatType,IntegerType
+import time
 # pyspark 3.4.0
 # Define MinIO endpoint and credentials
 minio_endpoint = "http://localhost:9000"
@@ -50,16 +50,16 @@ data =[
 # 1.創建 DataFrame
 # inserts = spark.createDataFrame(data, schema)
 
-table = "test_cow_table_minio_test1"
+table = "test_mor_table_minio_test1"
 # Configure Hudi options with Hive sync disabled
 hudi_options = {
     'hoodie.table.name': table,
-    'hoodie.datasource.write.table.type':"COPY_ON_WRITE",
+    'hoodie.datasource.write.table.type':"MERGE_ON_READ", 
     'hoodie.datasource.write.recordkey.field': 'ts',
     # 'hoodie.datasource.write.partitionpath.field': 'city',
-    'hoodie.insert.shuffle.parallelism': '50',
-    'hoodie.upsert.shuffle.parallelism': '50',
-    'hoodie.delete.shuffle.parallelism': '50',
+    'hoodie.insert.shuffle.parallelism': '10',
+    'hoodie.upsert.shuffle.parallelism': '10',
+    'hoodie.delete.shuffle.parallelism': '10',
     'hoodie.datasource.hive_sync.enable': 'false',  # Disable Hive sync
     'hoodie.datasource.write.hive_style_partitioning': 'false'
 }
@@ -75,15 +75,13 @@ basePath = f"s3a://{minio_bucket}/{table}"
 #Start time calculation
 # start_time = time.time()
 # print(start_time)
+# # 2. Upsert Data
 # for i in range(0,50):
 #     print(i)
-#     # 2. Upsert Data
 #     upsert_data = [
-
-#         (i, f"new-uuid-{i}", "rider-Z", "driver-w", 50.50, "san_francisco")  # New record
-#         # (1695159649087, "334e26e9-8355-45cc-97c6-c31daf0df330", "rider-A", "driver-K", 20.10, "san_francisco")  # Update fare
+#         # (1695159649087, "334e26e9-8355-45cc-97c6-c31daf0df330", "rider-A", "driver-K", 20.10, "san_francisco"),  # Update fare
 #         # (1695091554788, "e96c4396-3fad-413a-a942-4cb36106d721", "rider-C", "driver-M", 28.70, "san_francisco"),  # Update fare
-#         # (1695200000000, "new-uuid-1", "rider-Z", "driver-Y", 45.50, "new_york")  # New record
+#         (i, f"new-uuid-{i}", "rider-Z", "driver-w", 50.50, "san_francisco")  # New record
 #     ]
 #     upserts = spark.createDataFrame(upsert_data).toDF(*columns)
 #     upserts.write.format("hudi"). \
@@ -93,9 +91,41 @@ basePath = f"s3a://{minio_bucket}/{table}"
 # # End time calculation
 # end_time = time.time()
 # print(end_time)
-# # Calculate the complete time
+# Calculate the complete time
 # complete_time = end_time - start_time
 # print(f"Complete time taken: {complete_time} seconds")
+
+# schema evolution
+
+# 2. Upsert Data
+# # Define updated schema for schema evolution
+# updated_schema = StructType([
+#     StructField("ts", LongType(), True),
+#     StructField("uuid", StringType(), True),
+#     StructField("rider", StringType(), True),
+#     StructField("driver", StringType(), True),
+#     StructField("fare", FloatType(), True),
+#     StructField("city", StringType(), True),
+#     StructField("bonus_points", IntegerType(), True)  
+# ])
+
+# Update DataFrame with updated schema for schema evolution
+# updated_data = [
+#     (1695159649087, "334e26e9-8355-45cc-97c6-c31daf0df330", "rider-A", "driver-K", 19.10, "san_francisco", 100),
+#     (1695091554788, "e96c4396-3fad-413a-a942-4cb36106d721", "rider-C", "driver-M", 27.70, "san_francisco", 150),
+#     (1695200000000, "new-uuid-1", "rider-Z", "driver-Y", 45.50, "new_york", 200)  # New record with bonus_points
+# ]
+
+# # Create DataFrame with updated schema
+# updated_df = spark.createDataFrame(updated_data, updated_schema)
+
+# # Upsert updated data with updated schema for schema evolution
+# updated_df.write.format("hudi"). \
+#     options(**hudi_options). \
+#     mode("append"). \
+#     save(basePath)
+
+
 # 3.Update data
 # Lets read data from target Hudi table, modify fare column for rider-D and update it.
 # updatesDf = spark.read.format("hudi").load(basePath).filter("rider == 'rider-D'").withColumn("fare",col("fare")*10)
@@ -120,7 +150,7 @@ basePath = f"s3a://{minio_bucket}/{table}"
 #     option("hoodie.datasource.write.operation", "delete") \
 #     .save(basePath)
 
-# Read Hudi table
+# # Read Hudi table
 start_time = time.time()
 print(start_time)
 hudi_df = spark.read.format("hudi").load(basePath)

@@ -35,27 +35,29 @@ spark.sparkContext.setLogLevel("ERROR")
 # Create a spark dataframe and write as a delta table
 print("Starting Delta table creation")
 
-# Create a spark dataframe and write as a delta table
-# data = [(1, "Baratheon"),
-#         (2, "Stark"),
-#         (3, "Lannister")
-#         ]
-# schema = StructType([
-#     StructField("id", IntegerType(), True),
-#     StructField("name", StringType(), True),
-# ])
-# sample_dataframe = spark.createDataFrame(data=data, schema=schema)
-# sample_dataframe.repartition(1).write.mode(saveMode="append").format("delta").save(DELTA_TABLE_PATH)
-# # Register the Delta table in the Spark catalog
-# spark.sql(f"CREATE TABLE mor_table USING DELTA LOCATION '{DELTA_TABLE_PATH}'")
-# # Enable deletion vectors on the table
-# spark.sql(f"ALTER TABLE mor_table SET TBLPROPERTIES ('delta.enableDeletionVectors' = true)")
+#Create a spark dataframe and write as a delta table
+data = [(1, "Baratheon"),
+        (2, "Stark"),
+        (3, "Lannister")
+        ]
+schema = StructType([
+    StructField("id", IntegerType(), True),
+    StructField("name", StringType(), True),
+])
+sample_dataframe = spark.createDataFrame(data=data, schema=schema)
+sample_dataframe.repartition(1).write.mode(saveMode="append").format("delta").save(DELTA_TABLE_PATH)
 
+#Register the Delta table in the Spark catalog
+spark.sql(f"CREATE TABLE mor_table USING DELTA LOCATION '{DELTA_TABLE_PATH}'")
+# Enable deletion vectors on the table
+spark.sql(f"ALTER TABLE mor_table SET TBLPROPERTIES ('delta.enableDeletionVectors' = true)")
+df = spark.sql("DESCRIBE DETAIL mor_table")
+print(df.show(truncate=False))
 got_df = spark.read.format("delta").load(DELTA_TABLE_PATH)
 got_df.show() 
 
 # Update data in Delta
-print("Update data...!")
+# print("Update data...!")
 # # delta table path
 # deltaTable = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
 # deltaTable.toDF().show()
@@ -64,18 +66,18 @@ print("Update data...!")
 #     set={"name": lit("Esther")})
 
 # Perform deletion
-print("Deleting data...")
-deltaTable = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
-deltaTable.delete("name = 'Lannister'")
-print("Data after deletion (logical delete):")
-deltaTable.toDF().show()# Optimize the table to reduce the number of files
+# print("Deleting data...")
+# deltaTable = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
+# deltaTable.delete("name = 'Lannister'")
+# print("Data after deletion (logical delete):")
+# deltaTable.toDF().show()# Optimize the table to reduce the number of files
 
-print("Optimizing the table...")
-spark.sql(f"OPTIMIZE mor_table")
-spark.sql(f"REORG TABLE mor_table APPLY (PURGE);")
-# Show data after optimization
-optimized_df = spark.read.format("delta").load(DELTA_TABLE_PATH)
-optimized_df.show()
+# print("Optimizing the table...")
+# spark.sql(f"OPTIMIZE mor_table")
+# spark.sql(f"REORG TABLE mor_table APPLY (PURGE);")
+# # Show data after optimization
+# optimized_df = spark.read.format("delta").load(DELTA_TABLE_PATH)
+# optimized_df.show()
 
 
 # got_df = spark.read.format("delta").load(DELTA_TABLE_PATH)

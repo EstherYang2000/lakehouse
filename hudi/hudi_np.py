@@ -7,7 +7,7 @@ from pyspark.sql.types import StructType, StructField, LongType, StringType, Flo
 minio_endpoint = "http://localhost:9000"
 minio_access_key = "esther"
 minio_secret_key = "estheresther"
-minio_bucket = "scpm"
+minio_bucket = "hudi"
 
 # Initialize SparkSession with Hudi and Hadoop AWS packages
 spark = SparkSession.builder \
@@ -65,31 +65,31 @@ hudi_options = {
 
 basePath = f"s3a://{minio_bucket}/{table}"
 
-# # 1. insert data to hudi table
-# inserts.write.format("hudi"). \
-#     options(**hudi_options). \
-#     mode("overwrite"). \
-#     save(basePath)
+#1. insert data to hudi table
+inserts.write.format("hudi"). \
+    options(**hudi_options). \
+    mode("overwrite"). \
+    save(basePath)
 
 
 # 2. Upsert Data
-# upsert_data = [
-#     (1695159649087, "334e26e9-8355-45cc-97c6-c31daf0df330", "rider-A", "driver-K", 20.10, "san_francisco"),  # Update fare
-#     (1695091554788, "e96c4396-3fad-413a-a942-4cb36106d721", "rider-C", "driver-M", 28.70, "san_francisco"),  # Update fare
-#     (1695200000000, "new-uuid-1", "rider-Z", "driver-Y", 45.50, "new_york")  # New record
-# ]
-# # Define updated schema for schema evolution
-updated_schema = StructType([
-    StructField("ts", LongType(), True),
-    StructField("uuid", StringType(), True),
-    StructField("rider", StringType(), True),
-    StructField("driver", StringType(), True),
-    StructField("fare", FloatType(), True),
-    StructField("city", StringType(), True),
-    StructField("bonus_points", IntegerType(), True)  
-])
+upsert_data = [
+    (1695159649087, "334e26e9-8355-45cc-97c6-c31daf0df330", "rider-A", "driver-K", 20.10, "san_francisco"),  # Update fare
+    (1695091554788, "e96c4396-3fad-413a-a942-4cb36106d721", "rider-C", "driver-M", 28.70, "san_francisco"),  # Update fare
+    (1695200000000, "new-uuid-1", "rider-Z", "driver-Y", 45.50, "new_york")  # New record
+]
+# # # Define updated schema for schema evolution
+# updated_schema = StructType([
+#     StructField("ts", LongType(), True),
+#     StructField("uuid", StringType(), True),
+#     StructField("rider", StringType(), True),
+#     StructField("driver", StringType(), True),
+#     StructField("fare", FloatType(), True),
+#     StructField("city", StringType(), True)
+#     # StructField("bonus_points", IntegerType(), True)  
+# ])
 
-# # Update DataFrame with updated schema for schema evolution
+# Update DataFrame with updated schema for schema evolution
 # updated_data = [
 #     (1695159649087, "334e26e9-8355-45cc-97c6-c31daf0df330", "rider-A", "driver-K", 19.10, "san_francisco", 100),
 #     (1695091554788, "e96c4396-3fad-413a-a942-4cb36106d721", "rider-C", "driver-M", 27.70, "san_francisco", 150),
@@ -97,7 +97,7 @@ updated_schema = StructType([
 # ]
 
 # # Create DataFrame with updated schema
-# updated_df = spark.createDataFrame(updated_data, updated_schema)
+# updated_df = spark.createDataFrame(upsert_data, updated_schema)
 
 # # Upsert updated data with updated schema for schema evolution
 # updated_df.write.format("hudi"). \
@@ -109,7 +109,7 @@ updated_schema = StructType([
 #     (1695200000001, "new-uuid-2", "rider-Z", "driver-Y", 45.50, "new_york", "200")  # New record with bonus_points
 # ]
 # # upserts = spark.createDataFrame(upsert_wrong_type_data, updated_schema)
-columns = ["ts","uuid","rider","driver","fare","city","bonus_points"]
+# columns = ["ts","uuid","rider","driver","fare","city","bonus_points"]
  
 # upserts = spark.createDataFrame(upsert_wrong_type_data).toDF(*columns)
 # upserts.write.format("hudi"). \
@@ -172,25 +172,25 @@ hudi_options = {
 
 # pyspark
 # reload data
-spark.read.format("hudi").load(basePath).createOrReplaceTempView(table)
+# spark.read.format("hudi").load(basePath).createOrReplaceTempView(table)
 
-commits = list(map(lambda row: row[0], spark.sql(f"SELECT DISTINCT(_hoodie_commit_time) AS commitTime FROM  {table} ORDER BY commitTime").limit(50).collect()))
-# beginTime = commits[len(commits) - 2] # commit time we are interested in
-beginTime = commits[0]
-print(commits)
-print(beginTime)
-# # incrementally query data
-incremental_read_options = {
-  'hoodie.datasource.query.type': 'incremental',
-  'hoodie.datasource.read.begin.instanttime': commits[0],
-  'hoodie.datasource.read.end.instanttime': commits[1]  # Optional: Set end instant time to first commit
+# commits = list(map(lambda row: row[0], spark.sql(f"SELECT DISTINCT(_hoodie_commit_time) AS commitTime FROM  {table} ORDER BY commitTime").limit(50).collect()))
+# # beginTime = commits[len(commits) - 2] # commit time we are interested in
+# beginTime = commits[0]
+# print(commits)
+# print(beginTime)
+# # # incrementally query data
+# incremental_read_options = {
+#   'hoodie.datasource.query.type': 'incremental',
+#   'hoodie.datasource.read.begin.instanttime': commits[0],
+#   'hoodie.datasource.read.end.instanttime': commits[1]  # Optional: Set end instant time to first commit
 
-}
-tripsIncrementalDF = spark.read.format("hudi"). \
-  options(**incremental_read_options). \
-  load(basePath)
-tripsIncrementalDF.createOrReplaceTempView("trips_incremental")
+# }
+# tripsIncrementalDF = spark.read.format("hudi"). \
+#   options(**incremental_read_options). \
+#   load(basePath)
+# tripsIncrementalDF.createOrReplaceTempView("trips_incremental")
 
-spark.sql("SELECT `_hoodie_commit_time`, city,fare, rider, driver, uuid, ts FROM trips_incremental").show()
+# spark.sql("SELECT `_hoodie_commit_time`, city,fare, rider, driver, uuid, ts FROM trips_incremental").show()
 
-spark.stop()
+# spark.stop()
