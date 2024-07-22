@@ -1,0 +1,5 @@
+delta_data:
+  base_path : 'data/scmp-raw-layer/cpo/cpis/ba_dmnd_data'
+delta_table: 
+  delta_table_path : "data/scmp-stage-layer/cpo/ba_dmnd_data"
+  delta_table_source_path : "lakehouse/delta_lake/data/scmp-raw-layer/cpo/cpis/ba_dmnd_data/year=2024/month=7/day=22/ba_dmnd_data_20240722.parquet"

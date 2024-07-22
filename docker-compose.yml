@@ -16,13 +16,13 @@ services:
     volumes:
       - minio-data:/data
     # Nessie Catalog Server Using In-Memory Store
-  nessie:
-    image: projectnessie/nessie:0.67.0
-    container_name: nessie
-    networks:
-      - lakehouse-nw
-    ports:
-      - 19120:19120
+  # nessie:
+  #   image: projectnessie/nessie:0.67.0
+  #   container_name: nessie
+  #   networks:
+  #     - lakehouse-nw
+  #   ports:
+  #     - 19120:19120
   # mariadb:
   #   image: mariadb:latest
   #   container_name: mariadb
