@@ -1,0 +1,17 @@
+schema:
+  - name: order_id
+    type: string
+  - name: product_id
+    type: string
+  - name: product_name
+    type: string
+  - name: supplier
+    type: string
+  - name: quantity
+    type: int32
+  - name: unit_price
+    type: float64
+  - name: order_date
+    type: timestamp
+  - name: delivery_date
+    type: timestamp
