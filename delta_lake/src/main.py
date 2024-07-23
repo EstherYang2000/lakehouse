@@ -1,7 +1,7 @@
 import sys
 import os
 import argparse
-from delta_lake.utils.fake_data import generate_fake_supply_chain_data,dataframe_to_parquet_buffer
+from delta_lake.utils.fake_data import generate_fake_supply_chain_data,dataframe_to_parquet_buffer,manipulate_data
 from delta_lake.utils.read_data import dataframe_to_file,read_file,read_yaml
 import yaml
 if __name__ == "__main__":
@@ -14,12 +14,31 @@ if __name__ == "__main__":
     parser.add_argument('--base_dir', type=str, default=yaml_data['delta_data']['base_path'], help='Base directory')
     
     args = parser.parse_args()
-    # Generate fake supply chain data
-    df = generate_fake_supply_chain_data(args.num_rows)
-    # Convert DataFrame to Parquet format and write to buffer
-    data_buffer = dataframe_to_parquet_buffer(df)
-    # Convert buffer to specified output format and save with current date in directory structure
-    file_path = dataframe_to_file(data_buffer, output_format=args.output_format, base_dir=args.base_dir)
-    df = read_file(file_path)
-    print(df.head())
 
+    # # Generate fake supply chain data
+    # df = generate_fake_supply_chain_data(args.num_rows)
+    # # Convert DataFrame to Parquet format and write to buffer
+    # data_buffer = dataframe_to_parquet_buffer(df)
+    # # Convert buffer to specified output format and save with current date in directory structure
+    # file_path = dataframe_to_file(data_buffer, output_format=args.output_format, base_dir=args.base_dir)
+    # df = read_file(file_path)
+    # print(df.head())
+
+
+
+    # update the file data
+    source_path = "data/scmp-raw-layer/cpo/cpis/ba_dmnd_data/year=2024/month=7/day=28/ba_dmnd_data_20240728.parquet"
+    source_df = read_file(source_path)
+    print(source_df.head(15))
+    updated_df = manipulate_data(source_df, "mixed")
+    print(len(updated_df))
+    data_buffer = dataframe_to_parquet_buffer(updated_df)
+    file_path = dataframe_to_file(data_buffer, output_format=args.output_format, base_dir=args.base_dir)
+    print(updated_df.head(15))
+# python3 src/main.py --num_rows 10 --output_format parquet
+
+# 23 original
+# 24 update  ORD0003 22.63
+# 25 upsert ORD0002 38.68 / ORD0011
+# 26 delete ORD0010
+# 27 mixed delete ORD0001  update ORD0004 upsert ORD0012

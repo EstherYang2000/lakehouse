@@ -11,13 +11,13 @@ def convert_to_arrow_schema(schema_yaml: dict) -> pa.Schema:
         field_type = field['type']
         
         if field_type == 'int32':
-            pa_type = pa.int32()
+            pa_type = pa.int64()
         elif field_type == 'string':
             pa_type = pa.string()
         elif field_type == 'float64':
             pa_type = pa.float64()
         elif field_type == 'timestamp':
-            pa_type = pa.date64()
+            pa_type = pa.timestamp('us')
         else:
             raise ValueError(f"Unsupported type: {field_type}")
         

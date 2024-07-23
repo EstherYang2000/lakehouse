@@ -49,8 +49,11 @@ delta_config ={
 # df = pd.DataFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"]})
 # df = df.astype({"id": "int32", "name": "string"})  # Ensure Pandas dtype matches Spark schema
 
+
+
 # Write DataFrame to Delta Lake table in MinIO
 # write_deltalake(delta_table_path, df,schema=schema,storage_options=delta_config)
+
 
 # # Append new data to existing Delta Lake table in MinIO append
 # df_append = pd.DataFrame({"id": [4, 5], "name": ["David", "Eve"]})
