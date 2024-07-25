@@ -4,7 +4,7 @@ from deltalake import DeltaTable
 import json
 import os
 from delta_lake.utils.read_data import read_file,read_yaml
-from delta_lake.src.delta import convert_to_arrow_schema,is_delta_table
+from delta_lake.src.delta_utils import convert_to_arrow_schema,is_delta_table
 from datetime import datetime, timedelta
 import argparse
 import pyarrow.dataset as ds
@@ -28,8 +28,6 @@ if __name__ == "__main__":
     schema_pa = convert_to_arrow_schema(schema_yaml)
     delta_config ={
     }
-    
-
 
     if not os.path.exists(delta_table_path):
         print(f"Delta Table Directory '{delta_table_path}' does not exist.")
@@ -65,7 +63,7 @@ if __name__ == "__main__":
         # write_deltalake(delta_table_path, source_df, mode="append")
 
         # overwrite
-        write_deltalake(delta_table_path, source_df, mode="overwrite")
+        # write_deltalake(delta_table_path, source_df, mode="overwrite")
 
         print("\nDelta Table After Append Operations:")
         delta_table = DeltaTable(delta_table_path)
@@ -85,16 +83,14 @@ if __name__ == "__main__":
         # dt = DeltaTable(delta_table_path, version=2)
         # print(dt.to_pandas()) 
 
+
         # 3. Read the table history 
         dt = DeltaTable(delta_table_path)
         history = dt.history()
         df = pd.DataFrame(history)
         # Display DataFrame
         print(df.head(10))
-
-  
-
-
+        
 
 
     # Perform merge operation to update existing rows and insert new rows (pyspark)
@@ -145,7 +141,7 @@ if __name__ == "__main__":
         engine : default : pyarrow writer engine to write the delta table. Rust engine is still experimental but you may see up to 4x performance improvements over pyarrow.	
         """
         if args.partition:
-            write_deltalake(delta_table_path, source_df,schema=schema_pa,storage_options=delta_config, partition_by=["supplier"],name="ba_dmnd_data_p",schema_mode="overwrite",engine="pyarrow")
+            write_deltalake(delta_table_path, source_df,schema=schema_pa,storage_options=delta_config, partition_by=schema_yaml["partition"],name="ba_dmnd_data_p",schema_mode="overwrite",engine="pyarrow")
         else:
             write_deltalake(delta_table_path, source_df,schema=schema_pa,storage_options=delta_config,name="ba_dmnd_data",schema_mode="overwrite",engine="pyarrow")
 

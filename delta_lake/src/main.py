@@ -38,7 +38,7 @@ if __name__ == "__main__":
 # python3 src/main.py --num_rows 10 --output_format parquet
 
 # 23 original
-# 24 update  ORD0003 22.63
-# 25 upsert ORD0002 38.68 / ORD0011
-# 26 delete ORD0010
-# 27 mixed delete ORD0001  update ORD0004 upsert ORD0012
+# 24 update  ORD0003 22.63 //// ORD0008 20.32
+# 25 upsert ORD0002 38.68 / ORD0011 /// ORD0009 50.73 , ORD0011
+# 26 delete ORD0010 //// ORD0005 
+# 27 mixed delete ORD0001  update ORD0004 upsert ORD0012  //// delete ORD0009 update ORD0011 upsert ORD0012

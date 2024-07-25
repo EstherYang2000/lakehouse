@@ -67,7 +67,7 @@ print("Upserting Data...!")
 # delta table path
 deltaTable = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
 deltaTable.toDF().show()
-define new data
+# define new data
 data = [
         (2, "Andy"),
         (4,"Jon"),

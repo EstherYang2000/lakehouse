@@ -13,7 +13,7 @@ def dataframe_to_file(buffer, output_format='parquet', base_dir='data/scmp-raw-l
     current_date = datetime.now().strftime('%Y%m%d')
     year = current_date[:4]
     month = current_date[4:6].lstrip('0')  # Remove leading zeros
-    day = int(current_date[6:8].lstrip('0'))+6   # Remove leading zeros
+    day = int(current_date[6:8].lstrip('0'))+4   # Remove leading zeros
     
     # Define output directory based on current date
     output_dir = os.path.join(base_dir, f'year={year}', f'month={month}', f'day={day}')
