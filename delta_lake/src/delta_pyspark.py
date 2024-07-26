@@ -112,8 +112,8 @@ if __name__ == "__main__":
             delta_table.alias("target") \
                 .merge(spark_df.alias("source"),"target.order_id = source.order_id") \
                 .whenNotMatchedBySourceDelete() \
-                .whenMatchedUpdateAll() \
                 .whenNotMatchedInsertAll() \
+                .whenMatchedUpdateAll() \
                 .execute()
             # # End time calculation
             end_time = time.time()
