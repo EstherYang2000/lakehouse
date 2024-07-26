@@ -9,7 +9,7 @@ from delta_lake.utils.read_data import read_file,read_yaml
 import os
 import pandas as pd
 from datetime import datetime, timedelta
-
+import time 
 def convert_datetime_columns_to_string(df):
     # Convert all datetime64[ns] columns to datetime64[s]
     for col in df.select_dtypes(include=['datetime64[ns]']).columns:
@@ -112,8 +112,8 @@ if __name__ == "__main__":
             delta_table.alias("target") \
                 .merge(spark_df.alias("source"),"target.order_id = source.order_id") \
                 .whenNotMatchedBySourceDelete() \
-                .whenNotMatchedInsertAll() \
                 .whenMatchedUpdateAll() \
+                .whenNotMatchedInsertAll() \
                 .execute()
             # # End time calculation
             end_time = time.time()

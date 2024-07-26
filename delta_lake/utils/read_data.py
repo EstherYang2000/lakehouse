@@ -22,7 +22,7 @@ def dataframe_to_file(buffer, output_format='parquet', base_dir='data/scmp-raw-l
     os.makedirs(output_dir, exist_ok=True)
     
     # Define output file path with current date
-    output_file = os.path.join(output_dir, f'ba_dmnd_data_{current_date}_v2.{output_format}')
+    output_file = os.path.join(output_dir, f'ba_dmnd_data_{current_date}.{output_format}')
     
     if output_format == 'parquet':
        # Convert buffer to Arrow Table and write to Parquet file

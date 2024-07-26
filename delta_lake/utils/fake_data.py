@@ -13,8 +13,8 @@ def generate_fake_supply_chain_data(num_records):
     """生成假供應鏈數據的 DataFrame"""
     data = {
         # 'order_id': [f'ORD{str(i).zfill(4)}' for i in range(13, 13 + num_records)],
-        'order_id': [f'ORD{str(i).zfill(4)}' for i in range(10000999, num_records+10000999)],
-        'product_id': [f'PROD{str(i).zfill(4)}' for i in range(10000999, num_records+10000999)],
+        'order_id': [f'ORD{str(i).zfill(4)}' for i in range(1001, num_records+1001)],
+        'product_id': [f'PROD{str(i).zfill(4)}' for i in range(1001, num_records+1001)],
         # 'product_id': [f'PROD{str(i).zfill(4)}' for i in range(13, 13 + num_records)],
         'product_name': [f'Product_{i}' for i in range(1, num_records + 1)],
         'supplier': [f'Supplier_{random.randint(1, 10)}' for _ in range(num_records)],
@@ -58,7 +58,7 @@ def manipulate_data(df, mode):
         
     elif mode == 'upsert':
         # Add new entries with random values
-        new_data = generate_fake_supply_chain_data(2)
+        new_data = generate_fake_supply_chain_data(1000000)
         updated_df = manipulate_data(df, "update")
         return pd.concat([updated_df, new_data], ignore_index=True)
     elif mode == 'delete':
@@ -84,3 +84,27 @@ def manipulate_data(df, mode):
         
     else:
         raise ValueError("Invalid mode. Choose from 'update', 'upsert', 'delete', or 'mixed'.")
+
+
+def generate_fake_mul_cols_supply_chain_data(num_records):
+    """Generate fake supply chain data DataFrame."""
+    data = {
+        'order_id': [f'ORD{str(i).zfill(6)}' for i in range(1, num_records + 1)],
+        'product_id': [f'PROD{str(i).zfill(6)}' for i in range(1, num_records + 1)],
+        'product_name': [f'Product_{i}' for i in range(1, num_records + 1)],
+        'supplier': [f'Supplier_{random.randint(1, 10)}' for _ in range(num_records)],
+        'quantity': [random.randint(1, 100) for _ in range(num_records)],
+        'unit_price': [round(random.uniform(10.0, 100.0), 2) for _ in range(num_records)],
+        'order_date': [datetime.now() - timedelta(days=random.randint(1, 30)) for _ in range(num_records)],
+        'delivery_date': [datetime.now() + timedelta(days=random.randint(1, 30)) for _ in range(num_records)]
+    }
+    
+    # Adding additional 42 columns with random data
+    for i in range(1, 43):
+        column_name = f'column_{i}'
+        if i % 2 == 0:
+            data[column_name] = [random.choice(['A', 'B', 'C', 'D', 'E']) for _ in range(num_records)]
+        else:
+            data[column_name] = [random.randint(1, 1000) for _ in range(num_records)]
+    
+    return pd.DataFrame(data)
