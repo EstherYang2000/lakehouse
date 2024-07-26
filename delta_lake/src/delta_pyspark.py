@@ -45,8 +45,9 @@ def get_versions_in_time_range(delta_table_path, start_time, end_time):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--partition', type=str, default=False, help='Partition Data')
-    parser.add_argument('--operation', type=str, choices=['append','delete', 'overwrite', 'update','merge','read'], help='Operation to perform on the Delta table')
-    parser.add_argument('--read_mode', type=str, default=False,choices=['default','version','timestamp', 'time_travel'], help='Operation to perform on the Delta table')
+    parser.add_argument('--operation', type=str, choices=['append','delete', 'overwrite', 'update','merge','schema_evolution','read','read_cdf'], help='Operation to perform on the Delta table')
+    parser.add_argument('--read_mode', type=str, default='default',choices=['default','version','timestamp', 'time_travel'], help='Operation to perform on the Delta table')
+    parser.add_argument('--deletion_vector', type=str, default=False, help='Deletion Vector')
 
     args = parser.parse_args()
 
@@ -60,10 +61,18 @@ if __name__ == "__main__":
     source_df = convert_datetime_columns_to_string(source_df)
     
     #  Create a spark session with Delta
-    builder = pyspark.sql.SparkSession.builder.appName("DeltaTutorial") \
-        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
-        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
-        .config("spark.databricks.delta.schema.autoMerge.enabled", "true") \
+    if args.deletion_vector:
+        builder = pyspark.sql.SparkSession.builder.appName("DeltaTutorial") \
+            .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+            .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+            .config("spark.databricks.delta.schema.autoMerge.enabled", "true") \
+            .config("spark.databricks.delta.changeDataFeed.enabled", "true") \
+            .config("spark.databricks.delta.deletionVectors.enabled", "true")
+    else:
+        builder = pyspark.sql.SparkSession.builder.appName("DeltaTutorial") \
+            .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+            .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+            .config("spark.databricks.delta.schema.autoMerge.enabled", "true") \
     # Create spark context
     spark = configure_spark_with_delta_pip(builder).getOrCreate()
     spark.sparkContext.setLogLevel("ERROR")
@@ -121,6 +130,32 @@ if __name__ == "__main__":
             # Calculate the complete time
             complete_time = end_time - start_time
             print(f"Complete time taken: {complete_time} seconds")
+        elif args.operation == 'schema_evolution':
+            # Define new data with an additional column 'age'
+            new_data = [
+                ("1", "prod_1", "Product 1", "Supplier_1", 10, 20.5, "2024-07-26 12:00:00", "2024-07-26 12:00:00",10),
+                ("2", "prod_2", "Product 2", "Supplier_2", 15, 30.75, "2024-07-26 12:00:00", "2024-07-26 12:00:00",10),
+                ("3", "prod_3", "Product 3", "Supplier_3", 20, 40.00, "2024-07-26 12:00:00", "2024-07-26 12:00:00",10),
+                ("4", "prod_4", "Product 4", "Supplier_4", 25, 50.25, "2024-07-26 12:00:00", "2024-07-26 12:00:00",10)
+            ]
+            new_schema = StructType([
+                StructField("order_id", StringType(), True),
+                StructField("product_id", StringType(), True),
+                StructField("product_name", StringType(), True),
+                StructField("supplier", StringType(), True),
+                StructField("quantity", IntegerType(), True),
+                StructField("unit_price", DoubleType(), True),
+                StructField("order_date", StringType(), True),
+                StructField("delivery_date", StringType(), True),
+                StructField("age", IntegerType(), True)  # New column 'age'
+            ])
+            new_df = spark.createDataFrame(data=new_data, schema=new_schema)
+            # Append new data with schema evolution
+            new_df.write \
+                .format("delta") \
+                .mode("append") \
+                .option("mergeSchema", "true") \
+                .save(DELTA_TABLE_PATH)
         elif args.operation == 'read':
             if args.read_mode =='default':
                 # Read the existing Delta table
@@ -172,7 +207,20 @@ if __name__ == "__main__":
                     combined_df.show()
                 else:
                     print("No versions found in the specified time range.")
-
+        elif args.operation == 'read_cdf':
+            print("Reading Change Data Feed...")
+            cdf_df = spark.read.format("delta") \
+                .option("readChangeData", "true") \
+                .option("startingVersion", 3) \
+                .option("endingVersion", 4) \
+                .load(DELTA_TABLE_PATH)
+            print("Change Data Feed:")
+            print(cdf_df)
+            cdf_df.show()
+            # Filter for deletions
+            deletions_df = cdf_df.filter(col("_change_type") == "delete")
+            print("Deletions:")
+            deletions_df.show()
         delta_table = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
         history_df = delta_table.history()
         print(history_df.show())
@@ -183,9 +231,28 @@ if __name__ == "__main__":
 
         # Write as a Delta table
         if args.partition:
+            
             partition_columns = schema_yaml['partition']
-            spark_df.repartition(1).write.mode("overwrite").format("delta").partitionBy(partition_columns).save(DELTA_TABLE_PATH)
+            if args.deletion_vector:
+                spark_df.repartition(1).write.mode("overwrite").format("delta").option("delta.enableDeletionVectors", "true").partitionBy(partition_columns).save(DELTA_TABLE_PATH)
+            else:
+                spark_df.repartition(1).write.mode("overwrite").format("delta").partitionBy(partition_columns).save(DELTA_TABLE_PATH)
         else:
-            spark_df.repartition(1).write.mode("overwrite").format("delta").save(DELTA_TABLE_PATH)
-        
+            if args.deletion_vector:
+                spark_df.repartition(1).write.mode("overwrite").format("delta").option("delta.enableDeletionVectors", "true").save(DELTA_TABLE_PATH)
+            else:
+                spark_df.repartition(1).write.mode("overwrite").format("delta").save(DELTA_TABLE_PATH)
+
+        if args.deletion_vector:
+            DELTA_TABLE_PATH = "file:////Users/yangyujie/Documents/tsmc/lakehouse/delta_lake/data/scmp-stage-layer/cpo/ba_dmnd_data_pyspark_deletion_vector"
+
+            # Enable deletion vector
+            delta_table = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
+            # Enable deletion vectors on existing table
+            spark.sql(f"ALTER TABLE delta.`{DELTA_TABLE_PATH}` SET TBLPROPERTIES ('delta.enableDeletionVectors' = 'true')")
+            spark.sql(f"ALTER TABLE delta.`{DELTA_TABLE_PATH}` SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true')")
+            table_details = spark.sql(f"DESCRIBE DETAIL delta.`{DELTA_TABLE_PATH}`")
+            table_details.show(truncate=False)
+            print("Deletion vectors enabled on the existing Delta table.")
+            
         print("Data written to Delta table successfully.")

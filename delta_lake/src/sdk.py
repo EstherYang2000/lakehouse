@@ -66,6 +66,7 @@ if __name__ == "__main__":
             # Calculate the complete time
             complete_time = end_time - start_time
             print(f"Complete time taken: {complete_time} seconds")
+       
         elif args.operation == 'append':
             # append 
             append_data_df = generate_fake_supply_chain_data(1)
