@@ -27,18 +27,25 @@ if __name__ == "__main__":
 
 
     # update the file data
-    source_path = "data/scmp-raw-layer/cpo/cpis/ba_dmnd_data/year=2024/month=7/day=28/ba_dmnd_data_20240728.parquet"
-    source_df = read_file(source_path)
-    print(source_df.head(15))
-    updated_df = manipulate_data(source_df, "mixed")
-    print(len(updated_df))
-    data_buffer = dataframe_to_parquet_buffer(updated_df)
-    file_path = dataframe_to_file(data_buffer, output_format=args.output_format, base_dir=args.base_dir)
+    source_path = "data/scmp-raw-layer/cpo/cpis/ba_dmnd_data/year=2024/month=7/day=30/ba_dmnd_data_20240730_v4.parquet"
+    # source_df = read_file(source_path)
+    # print(source_df.head(15))
+    # updated_df = manipulate_data(source_df, "mixed")
+    # print(len(updated_df))
+    # data_buffer = dataframe_to_parquet_buffer(updated_df)
+    # file_path = dataframe_to_file(data_buffer, output_format=args.output_format, base_dir=args.base_dir)
     print(updated_df.head(15))
 # python3 src/main.py --num_rows 10 --output_format parquet
 
-# 23 original
-# 24 update  ORD0003 22.63 //// ORD0008 20.32
-# 25 upsert ORD0002 38.68 / ORD0011 /// ORD0009 50.73 , ORD0011
-# 26 delete ORD0010 //// ORD0005 
-# 27 mixed delete ORD0001  update ORD0004 upsert ORD0012  //// delete ORD0009 update ORD0011 upsert ORD0012
+# 26 original
+# 27 update  ORD00950   
+# 25 upsert ORD0008 ORD0011
+# 26 delete ORD00312 
+# 27 mixed 10,000,999
+
+
+# 26 original
+# 27 update  ORD0003   
+# 25 upsert ORD0008 upsert ORD0011
+# 26 delete ORD0001
+# 27 mixed 10 delete ORD0005 update ORD0003 upsert ORD0012

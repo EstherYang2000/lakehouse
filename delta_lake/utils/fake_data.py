@@ -13,8 +13,8 @@ def generate_fake_supply_chain_data(num_records):
     """生成假供應鏈數據的 DataFrame"""
     data = {
         # 'order_id': [f'ORD{str(i).zfill(4)}' for i in range(13, 13 + num_records)],
-        'order_id': [f'ORD{str(i).zfill(4)}' for i in range(12, num_records+12)],
-        'product_id': [f'PROD{str(i).zfill(4)}' for i in range(12, num_records+12)],
+        'order_id': [f'ORD{str(i).zfill(4)}' for i in range(10000999, num_records+10000999)],
+        'product_id': [f'PROD{str(i).zfill(4)}' for i in range(10000999, num_records+10000999)],
         # 'product_id': [f'PROD{str(i).zfill(4)}' for i in range(13, 13 + num_records)],
         'product_name': [f'Product_{i}' for i in range(1, num_records + 1)],
         'supplier': [f'Supplier_{random.randint(1, 10)}' for _ in range(num_records)],
@@ -58,7 +58,7 @@ def manipulate_data(df, mode):
         
     elif mode == 'upsert':
         # Add new entries with random values
-        new_data = generate_fake_supply_chain_data(1)
+        new_data = generate_fake_supply_chain_data(2)
         updated_df = manipulate_data(df, "update")
         return pd.concat([updated_df, new_data], ignore_index=True)
     elif mode == 'delete':

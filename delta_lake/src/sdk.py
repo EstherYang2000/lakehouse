@@ -8,11 +8,12 @@ from delta_lake.src.delta_utils import convert_to_arrow_schema,is_delta_table
 from datetime import datetime, timedelta
 import argparse
 import pyarrow.dataset as ds
-
+import time 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--partition', type=str, default=False, help='Partition Data')
+    parser.add_argument('--operation', type=str, choices=['append', 'overwrite','merge','read'], required=True, help='Operation to perform on the Delta table')
     args = parser.parse_args()
 
     # Construct Delta Lake paths
@@ -41,36 +42,53 @@ if __name__ == "__main__":
         print(f"Version: {delta_table.version()}")
         print(f"Files: {delta_table.files()}")
         print(len(delta_table.to_pandas()))
-        print(delta_table.to_pandas())
+        # print(delta_table.to_pandas())
+        
+        if args.operation == 'merge':
+            # Merge 
+            #Start time calculation
+            start_time = time.time()
+            print(start_time)
 
-        # Merge 
-        # dt = DeltaTable(delta_table_path)
-        # dt.merge(
-        #     source=source_df,
-        #     predicate="target.order_id = source.order_id",
-        #     source_alias="source",
-        #     target_alias="target") \
-        # .when_not_matched_by_source_delete() \
-        # .when_not_matched_insert_all() \
-        # .when_matched_update_all() \
-        # .execute()
-
-
-        # append 
-        # append_data_df = generate_fake_supply_chain_data(1)
-        # for col in source_df.select_dtypes(include=['datetime64[ns]']).columns:
-        #     source_df[col] = source_df[col].astype('datetime64[ns]')
-        # write_deltalake(delta_table_path, source_df, mode="append")
-
-        # overwrite
-        # write_deltalake(delta_table_path, source_df, mode="overwrite")
-
+            dt = DeltaTable(delta_table_path)
+            dt.merge(
+                source=source_df,
+                predicate="target.order_id = source.order_id",
+                source_alias="source",
+                target_alias="target") \
+            .when_not_matched_by_source_delete() \
+            .when_not_matched_insert_all() \
+            .when_matched_update_all() \
+            .execute()
+            # # End time calculation
+            end_time = time.time()
+            print(end_time)
+            # Calculate the complete time
+            complete_time = end_time - start_time
+            print(f"Complete time taken: {complete_time} seconds")
+        elif args.operation == 'append':
+            # append 
+            append_data_df = generate_fake_supply_chain_data(1)
+            for col in source_df.select_dtypes(include=['datetime64[ns]']).columns:
+                source_df[col] = source_df[col].astype('datetime64[ns]')
+            write_deltalake(delta_table_path, source_df, mode="append")
+        elif args.operation == 'overwrite':
+            # overwrite
+            start_time = time.time()
+            print(start_time)
+            write_deltalake(delta_table_path, source_df, mode="overwrite")
+            # # End time calculation
+            end_time = time.time()
+            print(end_time)
+            # Calculate the complete time
+            complete_time = end_time - start_time
+            print(f"Complete time taken: {complete_time} seconds")
         print("\nDelta Table After Append Operations:")
         delta_table = DeltaTable(delta_table_path)
         print(f"Version: {delta_table.version()}")
         print(f"Files: {delta_table.files()}")
         print(len(delta_table.to_pandas()))
-        print(delta_table.to_pandas())
+        # print(delta_table.to_pandas())
 
         # Read the Data 
         # 1. Converting to a PyArrow Dataset 
@@ -89,7 +107,7 @@ if __name__ == "__main__":
         history = dt.history()
         df = pd.DataFrame(history)
         # Display DataFrame
-        print(df.head(10))
+        print(df.head(20))
         
 
 

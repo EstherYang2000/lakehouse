@@ -8,7 +8,7 @@ from delta_lake.src.delta_utils import yaml_to_spark_schema
 from delta_lake.utils.read_data import read_file,read_yaml
 import os
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def convert_datetime_columns_to_string(df):
     # Convert all datetime64[ns] columns to datetime64[s]
@@ -25,11 +25,28 @@ def append_data_to_delta_table(spark_df, path):
 def overwrite_data_in_delta_table(spark_df, path):
     spark_df.repartition(1).write.format("delta").mode("overwrite").save(path)
     print("Delta table overwritten successfully.")
+def to_datetime(ts):
+    return datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
 
+# # Define a function to get the history of the delta table
+def get_versions_in_time_range(delta_table_path, start_time, end_time):
+    delta_table = DeltaTable.forPath(spark, delta_table_path)
+    history_df = delta_table.history()
+    print(history_df.show())
+    start_time_dt = to_datetime(start_time)
+    end_time_dt = to_datetime(end_time)
+    versions_in_range = history_df.filter(
+        (col("timestamp") >= start_time_dt) & 
+        (col("timestamp") <= end_time_dt)
+    ).select("version").collect()
+    print(versions_in_range)
+    
+    return [row.version for row in versions_in_range]
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--partition', type=str, default=False, help='Partition Data')
-    parser.add_argument('--operation', type=str, choices=['append', 'overwrite', 'update','merge','read'], required=True, help='Operation to perform on the Delta table')
+    parser.add_argument('--operation', type=str, choices=['append','delete', 'overwrite', 'update','merge','read'], help='Operation to perform on the Delta table')
+    parser.add_argument('--read_mode', type=str, default=False,choices=['default','version','timestamp', 'time_travel'], help='Operation to perform on the Delta table')
 
     args = parser.parse_args()
 
@@ -70,24 +87,95 @@ if __name__ == "__main__":
         elif args.operation == 'append':
             append_data_to_delta_table(spark_df, DELTA_TABLE_PATH)
         
+        elif args.operation == 'delete':
+            print("Deleting data...!")
+            deltaTable = DeltaTable.forPath(spark_df, DELTA_TABLE_PATH)
+            deltaTable.toDF().show()
+            deltaTable.delete(condition=expr("name == '3'"))
+            deltaTable.toDF().show()
         elif args.operation == 'overwrite':
+            #Start time calculation
+            start_time = time.time()
+            print(start_time)
             overwrite_data_in_delta_table(spark_df, DELTA_TABLE_PATH)
+            # # End time calculation
+            end_time = time.time()
+            print(end_time)
+            # Calculate the complete time
+            complete_time = end_time - start_time
+            print(f"Complete time taken: {complete_time} seconds")
         elif args.operation == 'merge':
-            
-            delta_table.alias("oldData") \
-                .merge(
-                spark_df.alias("newData"),
-                "oldData.id = newData.id") \
-                .whenMatchedUpdate(
-                set={"name": col("newData.name")}) \
-                .whenNotMatchedInsert(values={"id": col("newData.id"), "name": col("newData.name")}) \
+            #Start time calculation
+            start_time = time.time()
+            print(start_time)
+            # Assuming delta_table is your DeltaTable object
+            delta_table.alias("target") \
+                .merge(spark_df.alias("source"),"target.order_id = source.order_id") \
+                .whenNotMatchedBySourceDelete() \
+                .whenNotMatchedInsertAll() \
+                .whenMatchedUpdateAll() \
                 .execute()
-                
+            # # End time calculation
+            end_time = time.time()
+            print(end_time)
+            # Calculate the complete time
+            complete_time = end_time - start_time
+            print(f"Complete time taken: {complete_time} seconds")
         elif args.operation == 'read':
-            # Read the existing Delta table
-            existing_df = delta_table.toDF()
-            print("Existing Delta Table Data:")
-            existing_df.show()
+            if args.read_mode =='default':
+                # Read the existing Delta table
+                existing_df = delta_table.toDF()
+                print("Existing Delta Table Data:")
+                existing_df.show()
+            elif args.read_mode =='version':
+                # Reading Older version of Data
+                print("Read detla data with version...!")
+                df_version = spark.read.format("delta").option("versionAsOf", 0).load(DELTA_TABLE_PATH)
+                df_version.show()
+            elif args.read_mode =='timestamp':
+                # Get the current timestamp after appending new data
+                current_timestamp = datetime.now()
+                timestamp_20_minutes_before_str = '2024-07-26 10:55:28'
+                timestamp_20_minutes_before = datetime.strptime(timestamp_20_minutes_before_str, '%Y-%m-%d %H:%M:%S')
+                # timestamp_20_minutes_before = current_timestamp - timedelta(minutes=120)
+                append_timestamp = timestamp_20_minutes_before.isoformat()
+                print(f"Reading delta table as of {append_timestamp}:")
+                df_as_of_timestamp = spark.read.format("delta").option("timestampAsOf", append_timestamp).load(DELTA_TABLE_PATH)
+                df_as_of_timestamp.show()
+            elif args.read_mode =='time_travel':
+                # # timestamps as formatted timestamp
+                starting_timestamp = '2024-07-26 10:50:00'
+                ending_timestamp = '2024-07-26 10:53:00'
+                # print(f"Read delta table with time travel from {starting_timestamp} to {ending_timestamp}...")
+
+                # version = spark.read.format("delta") \
+                #         .option("readChangeFeed", "true") \
+                #         .option("startingTimestamp", '2024-07-26 10:50:00') \
+                #         .option("endingTimestamp", '2024-07-26 10:53:00') \
+                #         .load(DELTA_TABLE_PATH)
+                # print(version)
+                # version_filtered = version.filter((col("_commit_timestamp") >= starting_timestamp) & (col("_commit_timestamp") <= ending_timestamp))
+                # print(version_filtered)
+                # version_filtered.show()
+                # Get versions within the time range
+                versions = get_versions_in_time_range(DELTA_TABLE_PATH, starting_timestamp, ending_timestamp)
+                # Read data from each version within the time range
+                dataframes = []
+                for version in versions:
+                    df_version = spark.read.format("delta").option("versionAsOf", version).load(DELTA_TABLE_PATH)
+                    dataframes.append(df_version)
+                # Union all dataframes to get the combined result
+                if dataframes:
+                    combined_df = dataframes[0]
+                    for df in dataframes[1:]:
+                        combined_df = combined_df.union(df)
+                    combined_df.show()
+                else:
+                    print("No versions found in the specified time range.")
+
+        delta_table = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
+        history_df = delta_table.history()
+        print(history_df.show())
         delta_table = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
         delta_table.toDF().show()
     else:
