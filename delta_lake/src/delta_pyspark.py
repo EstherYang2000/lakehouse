@@ -100,7 +100,7 @@ if __name__ == "__main__":
             print("Deleting data...!")
             deltaTable = DeltaTable.forPath(spark_df, DELTA_TABLE_PATH)
             deltaTable.toDF().show()
-            deltaTable.delete(condition=expr("name == '3'"))
+            deltaTable.delete(condition=expr("supplier == 'Supplier_4'"))
             deltaTable.toDF().show()
         elif args.operation == 'overwrite':
             #Start time calculation

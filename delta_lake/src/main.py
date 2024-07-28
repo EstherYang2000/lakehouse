@@ -1,7 +1,7 @@
 import sys
 import os
 import argparse
-from delta_lake.utils.fake_data import generate_fake_supply_chain_data,dataframe_to_parquet_buffer,manipulate_data
+from delta_lake.utils.fake_data import generate_fake_supply_chain_data,dataframe_to_parquet_buffer,manipulate_data,generate_fake_mul_cols_supply_chain_data
 from delta_lake.utils.read_data import dataframe_to_file,read_file,read_yaml
 import yaml
 if __name__ == "__main__":
@@ -20,19 +20,21 @@ if __name__ == "__main__":
         # Generate fake supply chain data
         df = generate_fake_supply_chain_data(args.num_rows)
     elif args.fake_mode == 'multi_cols':
-        df = generate_fake_supply_chain_data(args.num_rows)
-    # # Convert DataFrame to Parquet format and write to buffer
-    # data_buffer = dataframe_to_parquet_buffer(df)
-    # # Convert buffer to specified output format and save with current date in directory structure
-    # file_path = dataframe_to_file(data_buffer, output_format=args.output_format, base_dir=args.base_dir)
-    # df = read_file(file_path)
-    # print(df.head())
+        df = generate_fake_mul_cols_supply_chain_data(args.num_rows)
+    # Convert DataFrame to Parquet format and write to buffer
+    data_buffer = dataframe_to_parquet_buffer(df)
+    # Convert buffer to specified output format and save with current date in directory structure
+    file_path = dataframe_to_file(data_buffer, output_format=args.output_format, base_dir=args.base_dir)
+    df = read_file(file_path)
+    print(df.head())
+    print(df.info())
+    
 
     # update the file data
-    source_path = "data/scmp-raw-layer/cpo/cpis/ba_dmnd_data/year=2024/month=7/day=30/ba_dmnd_data_20240730.parquet"
-    source_df = read_file(source_path)
-    source_df_unique = source_df.drop_duplicates(subset=["order_id"])
-    print(len(source_df_unique))
+    # source_path = "data/scmp-raw-layer/cpo/cpis/ba_dmnd_data/year=2024/month=7/day=30/ba_dmnd_data_20240730.parquet"
+    # source_df = read_file(source_path)
+    # source_df_unique = source_df.drop_duplicates(subset=["order_id"])
+    # print(len(source_df_unique))
     # print(len(source_df))
     # print(source_df.head(15))
     # updated_df = manipulate_data(source_df, "mixed")
