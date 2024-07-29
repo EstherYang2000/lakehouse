@@ -25,7 +25,7 @@ if __name__ == "__main__":
     # Convert all datetime64[ns] columns to datetime64[s]
     for col in source_df.select_dtypes(include=['datetime64[ns]']).columns:
         source_df[col] = source_df[col].astype('datetime64[ns]')
-    schema_yaml = read_yaml('config/schema.yaml')
+    schema_yaml = read_yaml('config/schema_cols.yaml')
     schema_pa = convert_to_arrow_schema(schema_yaml)
     delta_config ={
     }
@@ -99,8 +99,8 @@ if __name__ == "__main__":
         # print(dataset.to_table(filter=condition, columns=["order_id"]))
 
         # 2. Read the table with version 
-        # dt = DeltaTable(delta_table_path, version=2)
-        # print(dt.to_pandas()) 
+        dt = DeltaTable(delta_table_path, version=1)
+        print(dt.to_pandas()) 
 
 
         # 3. Read the table history 
@@ -110,41 +110,6 @@ if __name__ == "__main__":
         # Display DataFrame
         print(df.head(20))
         
-
-
-    # Perform merge operation to update existing rows and insert new rows (pyspark)
-        # delta_table.merge(
-        #     source_df=mixed_df,
-        #     condition="current_data.order_id = new_data.order_id",
-        #     whenMatchedUpdate={
-        #         "quantity": mixed_df["quantity"],
-        #         "unit_price": mixed_df["unit_price"],
-        #         "order_date": mixed_df["order_date"],
-        #         "delivery_date": mixed_df["delivery_date"]
-        #     },
-        #     whenNotMatchedInsert={
-        #         "order_id": mixed_df["order_id"],
-        #         "product_id": mixed_df["product_id"],
-        #         "product_name": mixed_df["product_name"],
-        #         "supplier": mixed_df["supplier"],
-        #         "quantity": mixed_df["quantity"],
-        #         "unit_price": mixed_df["unit_price"],
-        #         "order_date": mixed_df["order_date"],
-        #         "delivery_date": mixed_df["delivery_date"]
-        #     }
-        # ).execute()
-
-        # # Example of deleting rows not in the mixed data
-        # delta_table.merge(
-        #     source_df=mixed_df,
-        #     condition="current_data.order_id = new_data.order_id",
-        #     whenNotMatchedDelete=True
-        # ).execute()
-        # # Read updated state of Delta table into a DataFrame
-        # delta_table_df_updated = delta_table.history(1)
-        # # Display the updated state of the Delta table
-        # print("\nDelta Table After Merge Operations:")
-        # print(delta_table_df_updated)
 
     else:
         print("Delta table does not exist at the specified path.")
@@ -164,3 +129,5 @@ if __name__ == "__main__":
         else:
             write_deltalake(delta_table_path, source_df,schema=schema_pa,storage_options=delta_config,name="ba_dmnd_data",schema_mode="overwrite",engine="pyarrow")
 
+        dt = DeltaTable(delta_table_path)
+        print(dt.to_pandas()) 

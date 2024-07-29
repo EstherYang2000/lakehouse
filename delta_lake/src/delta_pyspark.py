@@ -72,6 +72,7 @@ if __name__ == "__main__":
         builder = pyspark.sql.SparkSession.builder.appName("DeltaTutorial") \
             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
             .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+            .config("spark.databricks.delta.changeDataFeed.enabled", "true") \
             .config("spark.databricks.delta.schema.autoMerge.enabled", "true") \
     # Create spark context
     spark = configure_spark_with_delta_pip(builder).getOrCreate()
@@ -243,16 +244,16 @@ if __name__ == "__main__":
             else:
                 spark_df.repartition(1).write.mode("overwrite").format("delta").save(DELTA_TABLE_PATH)
 
-        if args.deletion_vector:
-            DELTA_TABLE_PATH = "file:////Users/yangyujie/Documents/tsmc/lakehouse/delta_lake/data/scmp-stage-layer/cpo/ba_dmnd_data_pyspark_deletion_vector"
+        # if args.deletion_vector:
+        #     DELTA_TABLE_PATH = "file:////home/kasm-user/Documents/lakehouse/delta_lake/data/scmp-stage-layer/cpo/ba_dmnd_data_pyspark_deletion_vector"
 
-            # Enable deletion vector
-            delta_table = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
-            # Enable deletion vectors on existing table
-            spark.sql(f"ALTER TABLE delta.`{DELTA_TABLE_PATH}` SET TBLPROPERTIES ('delta.enableDeletionVectors' = 'true')")
-            spark.sql(f"ALTER TABLE delta.`{DELTA_TABLE_PATH}` SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true')")
-            table_details = spark.sql(f"DESCRIBE DETAIL delta.`{DELTA_TABLE_PATH}`")
-            table_details.show(truncate=False)
-            print("Deletion vectors enabled on the existing Delta table.")
+        #     # Enable deletion vector
+        #     delta_table = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
+        #     # Enable deletion vectors on existing table
+        #     spark.sql(f"ALTER TABLE delta.`{DELTA_TABLE_PATH}` SET TBLPROPERTIES ('delta.enableDeletionVectors' = 'true')")
+        #     spark.sql(f"ALTER TABLE delta.`{DELTA_TABLE_PATH}` SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true')")
+        #     table_details = spark.sql(f"DESCRIBE DETAIL delta.`{DELTA_TABLE_PATH}`")
+        #     table_details.show(truncate=False)
+        #     print("Deletion vectors enabled on the existing Delta table.")
             
         print("Data written to Delta table successfully.")

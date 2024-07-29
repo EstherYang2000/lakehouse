@@ -58,7 +58,7 @@ def manipulate_data(df, mode):
         
     elif mode == 'upsert':
         # Add new entries with random values
-        new_data = generate_fake_supply_chain_data(1000000)
+        new_data = generate_fake_supply_chain_data(100000)
         updated_df = manipulate_data(df, "update")
         return pd.concat([updated_df, new_data], ignore_index=True)
     elif mode == 'delete':
@@ -105,6 +105,6 @@ def generate_fake_mul_cols_supply_chain_data(num_records):
         if i % 2 == 0:
             data[column_name] = [random.choice(['A', 'B', 'C', 'D', 'E']) for _ in range(num_records)]
         else:
-            data[column_name] = [random.randint(1, 1000) for _ in range(num_records)]
+            data[column_name] = [int(random.randint(1, 1000)) for _ in range(num_records)]
     
     return pd.DataFrame(data)

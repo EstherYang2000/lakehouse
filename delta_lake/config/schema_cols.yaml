@@ -1,0 +1,103 @@
+schema:
+  - name: order_id
+    type: string
+  - name: product_id
+    type: string
+  - name: product_name
+    type: string
+  - name: supplier
+    type: string
+  - name: quantity
+    type: int32
+  - name: unit_price
+    type: float64
+  - name: order_date
+    type: timestamp
+  - name: delivery_date
+    type: timestamp
+  - name: column_1
+    type: int32
+  - name: column_2
+    type: string
+  - name: column_3
+    type: int32
+  - name: column_4
+    type: string
+  - name: column_5
+    type: int32
+  - name: column_6
+    type: string
+  - name: column_7
+    type: int32
+  - name: column_8
+    type: string
+  - name: column_9
+    type: int32
+  - name: column_10
+    type: string
+  - name: column_11
+    type: int32
+  - name: column_12
+    type: string
+  - name: column_13
+    type: int32
+  - name: column_14
+    type: string
+  - name: column_15
+    type: int32
+  - name: column_16
+    type: string
+  - name: column_17
+    type: int32
+  - name: column_18
+    type: string
+  - name: column_19
+    type: int32
+  - name: column_20
+    type: string
+  - name: column_21
+    type: int32
+  - name: column_22
+    type: string
+  - name: column_23
+    type: int32
+  - name: column_24
+    type: string
+  - name: column_25
+    type: int32
+  - name: column_26
+    type: string
+  - name: column_27
+    type: int32
+  - name: column_28
+    type: string
+  - name: column_29
+    type: int32
+  - name: column_30
+    type: string
+  - name: column_31
+    type: int32
+  - name: column_32
+    type: string
+  - name: column_33
+    type: int32
+  - name: column_34
+    type: string
+  - name: column_35
+    type: int32
+  - name: column_36
+    type: string
+  - name: column_37
+    type: int32
+  - name: column_38
+    type: string
+  - name: column_39
+    type: int32
+  - name: column_40
+    type: string
+  - name: column_41
+    type: int32
+  - name: column_42
+    type: string
+
+partition: supplier

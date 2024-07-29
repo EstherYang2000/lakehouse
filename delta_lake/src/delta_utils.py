@@ -11,11 +11,11 @@ def convert_to_arrow_schema(schema_yaml: dict) -> pa.Schema:
         field_name = field['name']
         field_type = field['type']
         
-        if field_type == 'int32':
+        if field_type == 'int32' or field_type == 'int64':
             pa_type = pa.int64()
         elif field_type == 'string':
             pa_type = pa.string()
-        elif field_type == 'float64':
+        elif field_type == 'float64' or field_type == 'double':
             pa_type = pa.float64()
         elif field_type == 'timestamp':
             pa_type = pa.timestamp('us')
