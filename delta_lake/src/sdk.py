@@ -84,31 +84,50 @@ if __name__ == "__main__":
             # Calculate the complete time
             complete_time = end_time - start_time
             print(f"Complete time taken: {complete_time} seconds")
-        print("\nDelta Table After Append Operations:")
-        delta_table = DeltaTable(delta_table_path)
-        print(f"Version: {delta_table.version()}")
-        print(f"Files: {delta_table.files()}")
-        print(len(delta_table.to_pandas()))
-        # print(delta_table.to_pandas())
+        elif args.operation == 'read':
+            # Read the Data 
+            # 1. Converting to a PyArrow Dataset 
+            # dt = DeltaTable(delta_table_path)
+            # dataset = dt.to_pyarrow_dataset()
+            # condition = (ds.field("supplier") == "Supplier_5") & (ds.field("quantity") > 50)
+            # print(dataset.to_table(filter=condition, columns=["order_id"]))
+            start_time = time.time()
+            print(start_time)
+            dt = DeltaTable(delta_table_path)
+            # print(dt.to_pandas())
+            # # End time calculation
+            end_time = time.time()
+            print(end_time)
+            # Calculate the complete time
+            complete_time = end_time - start_time
+            print(f"Complete time taken: {complete_time} seconds")
+       
+            start_time = time.time()
+            print(start_time)
+            # 2. Read the table with version 
+            dt = DeltaTable(delta_table_path, version=1)
+            # print(dt.to_pandas()) 
+            # # End time calculation
+            end_time = time.time()
+            print(end_time)
+            # Calculate the complete time
+            complete_time = end_time - start_time
+            print(f"Complete time taken: {complete_time} seconds")
+       
 
-        # Read the Data 
-        # 1. Converting to a PyArrow Dataset 
-        # dt = DeltaTable(delta_table_path)
-        # dataset = dt.to_pyarrow_dataset()
-        # condition = (ds.field("supplier") == "Supplier_5") & (ds.field("quantity") > 50)
-        # print(dataset.to_table(filter=condition, columns=["order_id"]))
 
-        # 2. Read the table with version 
-        dt = DeltaTable(delta_table_path, version=1)
-        print(dt.to_pandas()) 
-
-
-        # 3. Read the table history 
-        dt = DeltaTable(delta_table_path)
-        history = dt.history()
-        df = pd.DataFrame(history)
-        # Display DataFrame
-        print(df.head(20))
+            # 3. Read the table history 
+            # dt = DeltaTable(delta_table_path)
+            # history = dt.history()
+            # df = pd.DataFrame(history)
+            # # Display DataFrame
+            # print(df.head(20))
+        # print("\nDelta Table After Append Operations:")
+        # delta_table = DeltaTable(delta_table_path)
+        # print(f"Version: {delta_table.version()}")
+        # print(f"Files: {delta_table.files()}")
+        # print(len(delta_table.to_pandas()))
+        
         
 
     else:

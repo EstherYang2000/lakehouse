@@ -159,29 +159,55 @@ if __name__ == "__main__":
                 .save(DELTA_TABLE_PATH)
         elif args.operation == 'read':
             if args.read_mode =='default':
+                start_time = time.time()
+                print(start_time)
                 # Read the existing Delta table
-                existing_df = delta_table.toDF()
+                delta_table = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
+                # existing_df = delta_table.toDF()
                 print("Existing Delta Table Data:")
-                existing_df.show()
+                end_time = time.time()
+                print(end_time)
+                # Calculate the complete time
+                complete_time = end_time - start_time
+                print(f"Complete time taken: {complete_time} seconds")
+                # existing_df.show()
+                
             elif args.read_mode =='version':
+                start_time = time.time()
+                print(start_time)
                 # Reading Older version of Data
                 print("Read detla data with version...!")
                 df_version = spark.read.format("delta").option("versionAsOf", 0).load(DELTA_TABLE_PATH)
-                df_version.show()
+                # df_version.show()
+                end_time = time.time()
+                print(end_time)
+                # Calculate the complete time
+                complete_time = end_time - start_time
+                print(f"Complete time taken: {complete_time} seconds")
             elif args.read_mode =='timestamp':
                 # Get the current timestamp after appending new data
+                start_time = time.time()
+                print(start_time)
                 current_timestamp = datetime.now()
-                timestamp_20_minutes_before_str = '2024-07-26 10:55:28'
+                timestamp_20_minutes_before_str = '2024-07-30 07:37:40'
                 timestamp_20_minutes_before = datetime.strptime(timestamp_20_minutes_before_str, '%Y-%m-%d %H:%M:%S')
                 # timestamp_20_minutes_before = current_timestamp - timedelta(minutes=120)
                 append_timestamp = timestamp_20_minutes_before.isoformat()
                 print(f"Reading delta table as of {append_timestamp}:")
                 df_as_of_timestamp = spark.read.format("delta").option("timestampAsOf", append_timestamp).load(DELTA_TABLE_PATH)
-                df_as_of_timestamp.show()
+                # df_as_of_timestamp.show()
+                end_time = time.time()
+                print(end_time)
+                # Calculate the complete time
+                complete_time = end_time - start_time
+                print(f"Complete time taken: {complete_time} seconds")
             elif args.read_mode =='time_travel':
+                start_time = time.time()
+                print(start_time)
+                current_timestamp = datetime.now()
                 # # timestamps as formatted timestamp
-                starting_timestamp = '2024-07-26 10:50:00'
-                ending_timestamp = '2024-07-26 10:53:00'
+                starting_timestamp = '2024-07-30 07:37:00'
+                ending_timestamp = '2024-07-30 07:38:00'
                 # print(f"Read delta table with time travel from {starting_timestamp} to {ending_timestamp}...")
 
                 # version = spark.read.format("delta") \
@@ -205,9 +231,15 @@ if __name__ == "__main__":
                     combined_df = dataframes[0]
                     for df in dataframes[1:]:
                         combined_df = combined_df.union(df)
-                    combined_df.show()
+                    # combined_df.show()
+                    end_time = time.time()
+                    print(end_time)
+                    # Calculate the complete time
+                    complete_time = end_time - start_time
+                    print(f"Complete time taken: {complete_time} seconds")
                 else:
                     print("No versions found in the specified time range.")
+                
         elif args.operation == 'read_cdf':
             print("Reading Change Data Feed...")
             cdf_df = spark.read.format("delta") \
@@ -225,8 +257,8 @@ if __name__ == "__main__":
         delta_table = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
         history_df = delta_table.history()
         print(history_df.show())
-        delta_table = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
-        delta_table.toDF().show()
+        # delta_table = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
+        # delta_table.toDF().show()
     else:
         print("Delta table does not exist at the specified path.")
 
@@ -244,16 +276,16 @@ if __name__ == "__main__":
             else:
                 spark_df.repartition(1).write.mode("overwrite").format("delta").save(DELTA_TABLE_PATH)
 
-        # if args.deletion_vector:
-        #     DELTA_TABLE_PATH = "file:////home/kasm-user/Documents/lakehouse/delta_lake/data/scmp-stage-layer/cpo/ba_dmnd_data_pyspark_deletion_vector"
-
-        #     # Enable deletion vector
-        #     delta_table = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
-        #     # Enable deletion vectors on existing table
-        #     spark.sql(f"ALTER TABLE delta.`{DELTA_TABLE_PATH}` SET TBLPROPERTIES ('delta.enableDeletionVectors' = 'true')")
-        #     spark.sql(f"ALTER TABLE delta.`{DELTA_TABLE_PATH}` SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true')")
-        #     table_details = spark.sql(f"DESCRIBE DETAIL delta.`{DELTA_TABLE_PATH}`")
-        #     table_details.show(truncate=False)
-        #     print("Deletion vectors enabled on the existing Delta table.")
-            
+        DELTA_TABLE_PATH = f"file://///Users/yangyujie/Documents/tsmc/lakehouse/delta_lake/{DELTA_TABLE_PATH}"
+        # Enable deletion vector
+        delta_table = DeltaTable.forPath(spark, DELTA_TABLE_PATH)
+        # Enable deletion vectors on existing table
+        if args.deletion_vector:
+            spark.sql(f"ALTER TABLE delta.`{DELTA_TABLE_PATH}` SET TBLPROPERTIES ('delta.enableDeletionVectors' = 'true')")
+            print("Deletion vectors enabled on the existing Delta table.")
+        
+        spark.sql(f"ALTER TABLE delta.`{DELTA_TABLE_PATH}` SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true')")
+        table_details = spark.sql(f"DESCRIBE DETAIL delta.`{DELTA_TABLE_PATH}`")
+        table_details.show(truncate=False)
+        
         print("Data written to Delta table successfully.")

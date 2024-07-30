@@ -7,7 +7,7 @@ import gzip
 from datetime import datetime
 import yaml
 
-def dataframe_to_file(buffer, output_format='parquet', base_dir='data/scmp-raw-layer/cpo/cpis/ba_dmnd_data')->str:
+def dataframe_to_file(buffer, fake_mode,output_format='parquet', base_dir='data/scmp-raw-layer/cpo/cpis/ba_dmnd_data')->str:
     """Convert buffer to specified output format and save with current date in directory structure."""
     # Get current date in YYYYMMDD format
     current_date = datetime.now().strftime('%Y%m%d')
@@ -22,7 +22,10 @@ def dataframe_to_file(buffer, output_format='parquet', base_dir='data/scmp-raw-l
     os.makedirs(output_dir, exist_ok=True)
     
     # Define output file path with current date
-    output_file = os.path.join(output_dir, f'ba_dmnd_data_{current_date}_mulcols.{output_format}')
+    if fake_mode == 'multi_rows':
+        output_file = os.path.join(output_dir, f'ba_dmnd_data_{current_date}.{output_format}')
+    elif fake_mode == 'multi_cols':    
+        output_file = os.path.join(output_dir, f'ba_dmnd_data_{current_date}_mulcols.{output_format}')
     
     if output_format == 'parquet':
        # Convert buffer to Arrow Table and write to Parquet file

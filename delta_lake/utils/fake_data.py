@@ -46,7 +46,7 @@ def randomly_update_columns(df):
     return df
 
     
-def manipulate_data(df, mode):
+def manipulate_data(df,fake_mode, mode):
     """Manipulate Pandas DataFrame based on mode ('update', 'upsert', 'delete', 'mixed')."""
     if mode == 'update':
         # Update existing keys with random values
@@ -58,8 +58,11 @@ def manipulate_data(df, mode):
         
     elif mode == 'upsert':
         # Add new entries with random values
-        new_data = generate_fake_supply_chain_data(100000)
-        updated_df = manipulate_data(df, "update")
+        if fake_mode == 'multi_rows':
+            new_data = generate_fake_supply_chain_data(1000000)
+        elif fake_mode == 'multi_cols':
+            new_data = generate_fake_mul_cols_supply_chain_data(100000)
+        updated_df = manipulate_data(df,fake_mode,"update")
         return pd.concat([updated_df, new_data], ignore_index=True)
     elif mode == 'delete':
         # Remove a random entry
@@ -75,8 +78,8 @@ def manipulate_data(df, mode):
         df_copy = df.copy()
         # Delete a random entry
         if len(df_copy) > 0:
-            deleted_df = manipulate_data(df_copy, "delete")
-            mixed_df = manipulate_data(deleted_df, "upsert")
+            deleted_df = manipulate_data(df_copy,fake_mode,"delete")
+            mixed_df = manipulate_data(deleted_df,fake_mode,"upsert")
             return mixed_df
         else:
 
@@ -89,8 +92,8 @@ def manipulate_data(df, mode):
 def generate_fake_mul_cols_supply_chain_data(num_records):
     """Generate fake supply chain data DataFrame."""
     data = {
-        'order_id': [f'ORD{str(i).zfill(6)}' for i in range(1, num_records + 1)],
-        'product_id': [f'PROD{str(i).zfill(6)}' for i in range(1, num_records + 1)],
+        'order_id': [f'ORD{str(i).zfill(6)}' for i in range(1001, num_records + 1001)],
+        'product_id': [f'PROD{str(i).zfill(6)}' for i in range(1001, num_records + 1001)],
         'product_name': [f'Product_{i}' for i in range(1, num_records + 1)],
         'supplier': [f'Supplier_{random.randint(1, 10)}' for _ in range(num_records)],
         'quantity': [random.randint(1, 100) for _ in range(num_records)],

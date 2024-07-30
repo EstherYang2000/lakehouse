@@ -38,10 +38,10 @@ if __name__ == "__main__":
     print(len(source_df))
     print(source_df.head(15))
     print(source_df.info())
-    updated_df = manipulate_data(source_df, "mixed")
+    updated_df = manipulate_data(source_df,args.fake_mode, "mixed")
     print(len(updated_df))
     data_buffer = dataframe_to_parquet_buffer(updated_df)
-    file_path = dataframe_to_file(data_buffer, output_format=args.output_format, base_dir=args.base_dir)
+    file_path = dataframe_to_file(data_buffer, args.fake_mode,args.output_format, base_dir=args.base_dir)
     print(updated_df.head(15))
     print(updated_df.info())
 
