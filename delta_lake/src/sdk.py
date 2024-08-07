@@ -1,5 +1,5 @@
 import pandas as pd
-from deltalake.writer import write_deltalake
+from deltalake.writer import write_deltalake,WriterProperties
 from deltalake import DeltaTable
 import json
 import os
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     # Convert all datetime64[ns] columns to datetime64[s]
     for col in source_df.select_dtypes(include=['datetime64[ns]']).columns:
         source_df[col] = source_df[col].astype('datetime64[ns]')
-    schema_yaml = read_yaml('config/schema_cols.yaml')
+    schema_yaml = read_yaml('config/schema.yaml')
     schema_pa = convert_to_arrow_schema(schema_yaml)
     delta_config ={
     }
@@ -47,6 +47,12 @@ if __name__ == "__main__":
         if args.operation == 'merge':
             # Merge 
             #Start time calculation
+            writer_properties = WriterProperties(
+                # data_page_size_limit=1024 * 1024,  # Limit DataPage size to 1MB
+                # dictionary_page_size_limit=1024 * 512,  # Limit dictionary page size to 512KB
+                # data_page_row_count_limit=10000,  # Limit the number of rows in each DataPage
+                max_row_group_size=10000000  # Max number of rows in each row group
+            )
             start_time = time.time()
             print(start_time)
 
@@ -55,12 +61,16 @@ if __name__ == "__main__":
                 source=source_df,
                 predicate="target.order_id = source.order_id",
                 source_alias="source",
-                target_alias="target") \
+                target_alias="target",
+                writer_properties=writer_properties
+
+                ) \
             .when_not_matched_by_source_delete() \
             .when_not_matched_insert_all() \
             .when_matched_update_all() \
             .execute()
-            # # End time calculation
+            # 合并操作后进行文件压缩
+            dt.optimize(target_size=10 * 9)            # # End time calculation
             end_time = time.time()
             print(end_time)
             # Calculate the complete time
@@ -123,9 +133,9 @@ if __name__ == "__main__":
             # # Display DataFrame
             # print(df.head(20))
         # print("\nDelta Table After Append Operations:")
-        # delta_table = DeltaTable(delta_table_path)
-        # print(f"Version: {delta_table.version()}")
-        # print(f"Files: {delta_table.files()}")
+        delta_table = DeltaTable(delta_table_path)
+        print(f"Version: {delta_table.version()}")
+        print(f"Files: {delta_table.files()}")
         # print(len(delta_table.to_pandas()))
         
         
@@ -146,7 +156,7 @@ if __name__ == "__main__":
         if args.partition:
             write_deltalake(delta_table_path, source_df,schema=schema_pa,storage_options=delta_config, partition_by=schema_yaml["partition"],name="ba_dmnd_data_p",schema_mode="overwrite",engine="pyarrow")
         else:
-            write_deltalake(delta_table_path, source_df,schema=schema_pa,storage_options=delta_config,name="ba_dmnd_data",schema_mode="overwrite",engine="pyarrow")
+            write_deltalake(delta_table_path, source_df,schema=schema_pa,storage_options=delta_config,name="ba_dmnd_data",schema_mode="overwrite",engine="pyarrow",max_rows_per_file=10**7)
 
         dt = DeltaTable(delta_table_path)
         print(dt.to_pandas()) 

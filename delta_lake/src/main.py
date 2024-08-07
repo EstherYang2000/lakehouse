@@ -24,21 +24,21 @@ if __name__ == "__main__":
     # # Convert DataFrame to Parquet format and write to buffer
     # data_buffer = dataframe_to_parquet_buffer(df)
     # # Convert buffer to specified output format and save with current date in directory structure
-    # file_path = dataframe_to_file(data_buffer, output_format=args.output_format, base_dir=args.base_dir)
+    # file_path = dataframe_to_file(data_buffer, args.fake_mode,output_format=args.output_format, base_dir=args.base_dir)
     # df = read_file(file_path)
     # print(df.head())
     # print(df.info())
     
 
     # update the file data
-    source_path = "data/scmp-raw-layer/cpo/cpis/ba_dmnd_data/year=2024/month=7/day=29/ba_dmnd_data_20240729_mulcols.parquet"
+    source_path = "data/scmp-raw-layer/cpo/cpis/ba_dmnd_data/year=2024/month=8/day=6/ba_dmnd_data_20240806.parquet"
     source_df = read_file(source_path)
     source_df_unique = source_df.drop_duplicates(subset=["order_id"])
     print(len(source_df_unique))
     print(len(source_df))
     print(source_df.head(15))
     print(source_df.info())
-    updated_df = manipulate_data(source_df,args.fake_mode, "mixed")
+    updated_df = manipulate_data(source_df,args.fake_mode, "update")
     print(len(updated_df))
     data_buffer = dataframe_to_parquet_buffer(updated_df)
     file_path = dataframe_to_file(data_buffer, args.fake_mode,args.output_format, base_dir=args.base_dir)
